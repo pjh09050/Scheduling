@@ -95,7 +95,7 @@ def full_enumeration(object):
 ################################################################################################################
 # 만들고 싶은 job 갯수
 
-num_jobs = 11
+num_jobs = 3
 #output_data = generate_input_data_uniform(num_jobs) # 균일분포로 데이터 생성
 output_data = generate_input_data_normal(num_jobs) # 정규분포로 데이터 생성
 
@@ -116,7 +116,7 @@ df = input_data
 ################################################################################################################
 # 넣어보고 싶은 sequence
 
-results = get_fitness([1,2,3,4,5,6])
+results = get_fitness([1,2,3])
 
 print(f'total flowtime : {results[0]}')
 print(f'makespan : {results[1]}')
