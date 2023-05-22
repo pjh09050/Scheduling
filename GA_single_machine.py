@@ -6,17 +6,18 @@ import itertools
 
 params = {
     'MUT': 0.5,  # 변이확률
-    'END' : 0.8,  # 설정한 비율만큼 sequence가 수렴하면 탐색을 멈추게 하는 파라미터
-    'POP_SIZE' : 10,  # population size 10 ~ 100
-    'RANGE' : 5, # sequence의 표현 범위, 만약 10이라면 길이가 10인 모든 순열 조합 생성
-    'NUM_OFFSPRING' : 3, # 한 세대에 발생하는 자식 chromosome의 수
+    'END' : 0.9,  # 설정한 비율만큼 sequence가 수렴하면 탐색을 멈추게 하는 파라미터
+    'POP_SIZE' : 100,  # population size 10 ~ 100
+    'RANGE' : 10, # chromosome의 표현 범위, 만약 10이라면 00000 00000 ~ 11111 11111까지임
+    'NUM_OFFSPRING' : 5, # 한 세대에 발생하는 자식 chromosome의 수
     'CHANGE' : 3, # 다음 세대로 가는 자식 교체 수
-    'type' : 'total_flowtime' # 원하는 목적함수
+    'type' : 'total_flowtime', # 원하는 목적함수
+    'num_job' : 10 # job 갯수
     # (원하는 파라미터는 여기에 삽입할 것)
     }
 # ------------------------------
 
-class GA():
+class GA_scheduling():
     def __init__(self, parameters):
         self.params = {}
         for key, value in parameters.items():
@@ -48,13 +49,13 @@ class GA():
 
         return total_flowtime, makespan, tardy_job, total_tardiness, total_weighted_tardiness
     
-    # def print_average_fitness(self, population):
-    #     population_average_fitness = 0
-    #     for i in range(len(population)):
-    #         population_average_fitness += population[i][1]
-    #     population_average_fitness = population_average_fitness / len(population)
-    #     print("population 평균 fitness: {}".format(population_average_fitness))
-    #     return population_average_fitness # 그래프 그리기 위한 return 
+    def print_average_fitness(self, population):
+        population_average_fitness = 0
+        for i in range(len(population)):
+            population_average_fitness += population[i][1]
+        population_average_fitness = population_average_fitness / len(population)
+        print("population 평균 fitness: {}".format(population_average_fitness))
+        return population_average_fitness # 그래프 그리기 위한 return 
     
     def sort_population(self, population):
         population.sort(key=lambda x:x[1])
@@ -63,7 +64,6 @@ class GA():
     def selection_operater(self, population):
         mom_ch = 0
         dad_ch = 0
-        offspring_cho = 0
         t = 0.7
         for i in range(2):
             sample = random.sample(population, 2)
@@ -79,21 +79,40 @@ class GA():
                     dad_ch = sample[0][0]
                 else:
                     dad_ch = sample[1][0]
+        return mom_ch, dad_ch
+
+    def crossover_operater(self, mom_cho, dad_cho):
+        # todo: 본인이 원하는 교차연산 구현(point, pmx 등), 자식해 반환
+        # 동일한 job이 있으면 안되는 교차 연산??
+        offspring_cho = 0
+        mom_ch = list(mom_cho)
+        dad_ch = list(dad_cho)
+        k = random.randint(0, len(mom_ch))
+        for i in range(k, len(mom_ch)):
+            mom_ch[i], dad_ch[i] = dad_ch[i], mom_ch[i]
         if self.get_fitness(mom_ch) >= self.get_fitness(dad_ch):
             offspring_cho = mom_ch
         else:
             offspring_cho = dad_ch
-
         return offspring_cho
+
+    def mutation_operater(self, chromosome):        
+        # todo: 변이가 결정되었다면 chromosome 안에서 랜덤하게 지정된 하나의 gene를 반대의 값(0->1, 1->0)으로 변이
+        k1=random.randint(0, self.params['RANGE']-1)
+        k2=random.randint(0, self.params['RANGE']-1)
+        chromosome[k1],chromosome[k2] = chromosome[k2],chromosome[k1] 
+        return chromosome
 
     def replacement_operator(self, population, offsprings):
         result_population = []
         population = self.sort_population(population)
+        
         # 자식해 집단 중 뽑고 싶은 자식 수를 파라미터로 받아 가장 안좋은 해 대체
         offsprings = random.sample(offsprings, self.params["CHANGE"])
         for i in range(len(offsprings)):
             population[-(i+1)] = offsprings[i]
         result_population = self.sort_population(population)
+        
         return result_population
     
     # 해 탐색(GA) 함수
@@ -105,8 +124,8 @@ class GA():
 
         # 1. 초기화: 랜덤하게 해를 초기화
         for i in range(self.params["POP_SIZE"]):
-            chromosome_all = list(itertools.permutations(range(1, self.params["RANGE"] + 1), self.params["RANGE"]))
-            chromosome = random.choice(chromosome_all)
+            chromosome = list(range(1, 11))
+            random.shuffle(chromosome)
             if self.params['type'] == 'total_flowtime':
                 results = self.get_fitness(chromosome)
                 fitness = results[0]
@@ -131,39 +150,48 @@ class GA():
             for i in range(self.params["NUM_OFFSPRING"]):
                             
                 # 2. 선택 연산
-                offspring = self.selection_operater(population)
+                mom_ch, dad_ch = self.selection_operater(population)
                 
+                # 3. 교차 연산
+                offspring = self.crossover_operater(mom_ch, dad_ch)
+
+                # 4. 변이 연산
+                # todo: 변이 연산여부를 결정, self.params["MUT"]에 따라 변이가 결정되지 않으면 변이연산 수행하지 않음
+                if random.uniform(0,1) >= self.params["MUT"]:
+                    offspring = self.mutation_operater(offspring)
+
                 if self.params['type'] == 'total_flowtime':
-                    results = self.get_fitness(chromosome)
+                    results = self.get_fitness(offspring)
                     fitness = results[0]
                 elif self.params['type'] == 'makespan':
-                    results = self.get_fitness(chromosome)
+                    results = self.get_fitness(offspring)
                     fitness = results[1]
                 elif self.params['type'] == 'number of tardy jobs':
-                    results = self.get_fitness(chromosome)
+                    results = self.get_fitness(offspring)
                     fitness = results[2]
                 elif self.params['type'] == 'total_tardiness':
-                    results = self.get_fitness(chromosome)
+                    results = self.get_fitness(offspring)
                     fitness = results[3]
                 elif self.params['type'] == 'total_weighted_tardiness':
-                    results = self.get_fitness(chromosome)
+                    results = self.get_fitness(offspring)
                     fitness = results[4]
-                offsprings.append([offspring, fitness])
- 
-            # 4. 대치 연산
+
+                offsprings.append([offspring,fitness])
+                
+            # 5. 대치 연산
             population = self.replacement_operator(population, offsprings)
             generation += 1
 
-            # self.print_average_fitness(population) # population의 평균 fitness를 출력함으로써 수렴하는 모습을 보기 위한 기능
-            #average.append(self.print_average_fitness(population)) # population의 평균 fitness 그래프를 그리기 위한 average에 추가
+            self.print_average_fitness(population) # population의 평균 fitness를 출력함으로써 수렴하는 모습을 보기 위한 기능
+            average.append(self.print_average_fitness(population)) # population의 평균 fitness 그래프를 그리기 위한 average에 추가
             average.append(population[0][1])
 
             # 6. 알고리즘 종료 조건 판단
-            # if population.count(population[0][1]) >= len(population) * self.params["END"]: # END비율만큼 수렴하면 정지
-            #     break
-            # if sum(1 for ind in population if ind[1] == population[0][1]) >= len(population) * self.params["END"]:
-            #     break
-            if generation > 100:
+            same = 0
+            for i in range(self.params["POP_SIZE"]):
+                if population[0][1] == population[i][1]:
+                    same += 1
+            if same >= len(population) * self.params["END"]: # END비율만큼 수렴하면 정지
                 break
 
         # 최종적으로 얼마나 소요되었는지의 세대수, 수렴된 chromosome과 fitness를 출력
@@ -175,7 +203,7 @@ class GA():
         plt.show()
 
 if __name__ == "__main__":
-    input_data = pd.read_csv('5_job_normal data.csv', index_col=0)
+    input_data = pd.read_csv('10_job_normal data.csv', index_col=0)
     df = input_data
-    ga = GA(params)
+    ga = GA_scheduling(params)
     ga.search()
