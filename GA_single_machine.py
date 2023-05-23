@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 import itertools
 
 params = {
-    'MUT': 0.5,  # 변이확률
+    'MUT': 0.1,  # 변이확률
     'END' : 0.9,  # 설정한 비율만큼 sequence가 수렴하면 탐색을 멈추게 하는 파라미터
     'POP_SIZE' : 100,  # population size 10 ~ 100
     'RANGE' : 10, # chromosome의 표현 범위, 만약 10이라면 00000 00000 ~ 11111 11111까지임
@@ -83,30 +83,29 @@ class GA_scheduling():
 
     def crossover_operater(self, mom_cho, dad_cho):
         # todo: 본인이 원하는 교차연산 구현(point, pmx 등), 자식해 반환
-        # 동일한 job이 있으면 안되는 교차 연산??
-        offspring_cho = 0
+        # 순서 교차
+        offspring_cho = [0] * self.params['num_job']
         mom_ch = list(mom_cho)
         dad_ch = list(dad_cho)
-        k = random.randint(0, len(mom_ch))
-        for i in range(k, len(mom_ch)):
-            mom_ch[i], dad_ch[i] = dad_ch[i], mom_ch[i]
-        if self.get_fitness(mom_ch) >= self.get_fitness(dad_ch):
-            offspring_cho = mom_ch
-        else:
-            offspring_cho = dad_ch
+        k1 = random.randint(0, len(mom_ch)/2)
+        k2 = random.randint(len(mom_ch)/2, len(mom_ch)-1) 
+        offspring_cho[k1:k2] = mom_ch[k1:k2]
+        for i in dad_ch:
+            if i not in offspring_cho:
+                offspring_cho[offspring_cho.index(0)] = i
         return offspring_cho
 
     def mutation_operater(self, chromosome):        
         # todo: 변이가 결정되었다면 chromosome 안에서 랜덤하게 지정된 하나의 gene를 반대의 값(0->1, 1->0)으로 변이
-        k1=random.randint(0, self.params['RANGE']-1)
-        k2=random.randint(0, self.params['RANGE']-1)
-        chromosome[k1],chromosome[k2] = chromosome[k2],chromosome[k1] 
+        # exchange mutation
+        ex_mu1 = random.randint(0, self.params['num_job']-1)
+        ex_mu2 = random.randint(0, self.params['num_job']-1)
+        chromosome[ex_mu1],chromosome[ex_mu2] = chromosome[ex_mu2], chromosome[ex_mu1] 
         return chromosome
 
     def replacement_operator(self, population, offsprings):
         result_population = []
         population = self.sort_population(population)
-        
         # 자식해 집단 중 뽑고 싶은 자식 수를 파라미터로 받아 가장 안좋은 해 대체
         offsprings = random.sample(offsprings, self.params["CHANGE"])
         for i in range(len(offsprings)):
