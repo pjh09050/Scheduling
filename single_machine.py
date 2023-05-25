@@ -12,8 +12,8 @@ def create_data(n, type):
         for job_id in range(1, num_jobs + 1):
             while True:
                 release_time = 0 # 출제시간
-                processing_time = int(max(0, np.random.uniform(1, 10))) # 소요시간 # 최소1, 최대10 균등분포
-                due_date = int(max(release_time + processing_time, np.random.uniform(8, 15))) # 제출기한
+                processing_time = int(0, np.random.uniform(1, 10)) # 소요시간 # 최소1, 최대10 균등분포
+                due_date = int(release_time + processing_time, np.random.uniform(8, 15)) # 제출기한
                 if release_time < processing_time and processing_time < due_date: # 제약조건
                     break
             rate = random.randint(1, 3) # 성적 반영 비율
@@ -65,12 +65,14 @@ def get_fitness(sequence):
         flowtime += job['출제시간'] + job['소요시간']
         total_flowtime += flowtime
 
-        makespan = max(makespan,  flowtime)
+        makespan = flowtime
         
         if flowtime - job['제출기한'] >= 0:
             tardiness = flowtime - job['제출기한']
             tardy_job += 1
             total_tardiness += tardiness
+        else:
+            tardiness = 0
 
         weighted_tardiness = job['성적 반영비율'] * tardiness
         total_weighted_tardiness += weighted_tardiness
@@ -82,6 +84,7 @@ def full_enumeration(object):
     num_jobs = len(df.columns)
     best_sequence = None
     minimize_objective = float('inf')
+    best_set = []
 
     # 모든 순열 조합 생성
     permutations = list(itertools.permutations(range(1, num_jobs + 1), num_jobs))

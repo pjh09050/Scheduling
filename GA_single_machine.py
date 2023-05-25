@@ -8,7 +8,6 @@ params = {
     'MUT': 0.1,  # 변이확률
     'END' : 0.9,  # 설정한 비율만큼 sequence가 수렴하면 탐색을 멈추게 하는 파라미터
     'POP_SIZE' : 100,  # population size 10 ~ 100
-    'RANGE' : 10, # chromosome의 표현 범위, 만약 10이라면 00000 00000 ~ 11111 11111까지임
     'NUM_OFFSPRING' : 5, # 한 세대에 발생하는 자식 chromosome의 수
     'CHANGE' : 3, # 다음 세대로 가는 자식 교체 수
     'type' : 'total_flowtime', # 원하는 목적함수
@@ -34,15 +33,17 @@ class GA_scheduling():
         
         for i in sequence:
             job = df['job' + str(i)]
-            flowtime += job['출제시간'] + job['소요시간']
+            flowtime += job['소요시간']
             total_flowtime += flowtime
 
-            makespan = max(makespan,  flowtime)
+            makespan = flowtime
             
             if flowtime - job['제출기한'] >= 0:
                 tardiness = flowtime - job['제출기한']
                 tardy_job += 1
                 total_tardiness += tardiness
+            else:
+                tardiness = 0
 
             weighted_tardiness = job['성적 반영비율'] * tardiness
             total_weighted_tardiness += weighted_tardiness
@@ -62,6 +63,7 @@ class GA_scheduling():
         return population
 
     def selection_operater(self, population):
+        # 토너먼트 선택(t보다 작으면 두 염색체 중 품질이 좋은 것을 선택)
         mom_ch = 0
         dad_ch = 0
         t = 0.7
@@ -95,11 +97,12 @@ class GA_scheduling():
                 offspring_cho[offspring_cho.index(0)] = i
         return offspring_cho
 
-    def mutation_operater(self, chromosome):        
-        # todo: 변이가 결정되었다면 chromosome 안에서 랜덤하게 지정된 하나의 gene를 반대의 값(0->1, 1->0)으로 변이
+    def mutation_operater(self, chromosome):
         # exchange mutation
         ex_mu1 = random.randint(0, self.params['num_job']-1)
         ex_mu2 = random.randint(0, self.params['num_job']-1)
+        while ex_mu1 == ex_mu2:
+            ex_mu2 = random.randint(0, self.params['num_job']-1)
         chromosome[ex_mu1],chromosome[ex_mu2] = chromosome[ex_mu2], chromosome[ex_mu1] 
         return chromosome
 
@@ -144,7 +147,7 @@ class GA_scheduling():
             population = self.sort_population(population)
         print(f"minimize {self.params['type']} initialzed population : \n", population, "\n\n")
 
-        while 1:
+        while generation < 3:
             offsprings = []
             for i in range(self.params["NUM_OFFSPRING"]):
                             
@@ -156,7 +159,7 @@ class GA_scheduling():
 
                 # 4. 변이 연산
                 # todo: 변이 연산여부를 결정, self.params["MUT"]에 따라 변이가 결정되지 않으면 변이연산 수행하지 않음
-                if random.uniform(0,1) >= self.params["MUT"]:
+                if random.uniform(0,1) <= self.params["MUT"]:
                     offspring = self.mutation_operater(offspring)
 
                 if self.params['type'] == 'total_flowtime':
