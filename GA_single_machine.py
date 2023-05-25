@@ -12,7 +12,6 @@ params = {
     'CHANGE' : 3, # 다음 세대로 가는 자식 교체 수
     'type' : 'total_flowtime', # 원하는 목적함수
     'num_job' : 10 # job 갯수
-    # (원하는 파라미터는 여기에 삽입할 것)
     }
 # ------------------------------
 
@@ -147,7 +146,7 @@ class GA_scheduling():
             population = self.sort_population(population)
         print(f"minimize {self.params['type']} initialzed population : \n", population, "\n\n")
 
-        while generation < 3:
+        while 1:
             offsprings = []
             for i in range(self.params["NUM_OFFSPRING"]):
                             
