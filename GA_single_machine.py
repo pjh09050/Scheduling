@@ -125,7 +125,7 @@ class GA_scheduling():
 
         # 1. 초기화: 랜덤하게 해를 초기화
         for i in range(self.params["POP_SIZE"]):
-            chromosome = list(range(1, 11))
+            chromosome = list(range(1, self.params['num_job']+1))
             random.shuffle(chromosome)
             if self.params['type'] == 'total_flowtime':
                 results = self.get_fitness(chromosome)
