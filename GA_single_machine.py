@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 import itertools
 
 params = {
-    'MUT': 0.1,  # 변이확률
+    'MUT': 0.5,  # 변이확률
     'END' : 0.9,  # 설정한 비율만큼 sequence가 수렴하면 탐색을 멈추게 하는 파라미터
     'POP_SIZE' : 100,  # population size 10 ~ 100
     'NUM_OFFSPRING' : 5, # 한 세대에 발생하는 자식 chromosome의 수
@@ -98,11 +98,21 @@ class GA_scheduling():
 
     def mutation_operater(self, chromosome):
         # exchange mutation
-        ex_mu1 = random.randint(0, self.params['num_job']-1)
-        ex_mu2 = random.randint(0, self.params['num_job']-1)
-        while ex_mu1 == ex_mu2:
-            ex_mu2 = random.randint(0, self.params['num_job']-1)
-        chromosome[ex_mu1],chromosome[ex_mu2] = chromosome[ex_mu2], chromosome[ex_mu1] 
+        # ex_mu1 = random.randint(0, self.params['num_job']-1)
+        # ex_mu2 = random.randint(0, self.params['num_job']-1)
+        # while ex_mu1 == ex_mu2:
+        #     ex_mu2 = random.randint(0, self.params['num_job']-1)
+        # chromosome[ex_mu1],chromosome[ex_mu2] = chromosome[ex_mu2], chromosome[ex_mu1]
+
+        # scramble mutation
+        sc_mu1 = random.randint(0, self.params['num_job'] - 3)
+        sc_mu2 = random.randint(sc_mu1 + 1, self.params['num_job'] - 1)
+        while sc_mu2 - sc_mu1 < 2:
+            sc_mu1 = random.randint(0, self.params['num_job'] - 3)
+            sc_mu2 = random.randint(sc_mu1 + 1, self.params['num_job'] - 1)
+        scramble_list = chromosome[sc_mu1:sc_mu2]
+        random.shuffle(scramble_list)
+        chromosome[sc_mu1:sc_mu2] = scramble_list
         return chromosome
 
     def replacement_operator(self, population, offsprings):
