@@ -84,17 +84,23 @@ class GA_scheduling():
     def crossover_operater(self, mom_cho, dad_cho):
         # todo: 본인이 원하는 교차연산 구현(point, pmx 등), 자식해 반환
         # 순서 교차
-        offspring_cho = [0] * self.params['num_job']
         mom_ch = list(mom_cho)
         dad_ch = list(dad_cho)
+        offspring_cho = [0] * self.params['num_job']
         k1 = random.randint(0, len(mom_ch)/2-1)
         k2 = random.randint(len(mom_ch)/2, len(mom_ch)-1) 
         offspring_cho[k1:k2] = mom_ch[k1:k2]
-        index = k2
+        index = k2  
+
         for i in range(len(dad_ch)):
-            if dad_ch[i] not in offspring_cho:
-                offspring_cho[index % len(offspring_cho)] = dad_ch[i]
+            if dad_ch[index] not in offspring_cho:
+                offspring_cho[offspring_cho.index(0)] = dad_ch[index]
                 index += 1
+            else:
+                index += 1
+            if index == len(offspring_cho):
+                index = 0 
+
         return offspring_cho
 
     def mutation_operater(self, chromosome):
