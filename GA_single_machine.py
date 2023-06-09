@@ -87,12 +87,17 @@ class GA_scheduling():
         offspring_cho = [0] * self.params['num_job']
         mom_ch = list(mom_cho)
         dad_ch = list(dad_cho)
-        k1 = random.randint(0, len(mom_ch)/2)
+        print('1', mom_ch, dad_ch)
+        k1 = random.randint(0, len(mom_ch)/2-1)
         k2 = random.randint(len(mom_ch)/2, len(mom_ch)-1) 
+        print('k', k1,k2)
         offspring_cho[k1:k2] = mom_ch[k1:k2]
-        for i in dad_ch:
-            if i not in offspring_cho:
-                offspring_cho[offspring_cho.index(0)] = i
+        index = k2
+        for i in range(len(dad_ch)):
+            if dad_ch[i] not in offspring_cho:
+                offspring_cho[index % len(offspring_cho)] = dad_ch[i]
+                index += 1
+        print('2', offspring_cho)
         return offspring_cho
 
     def mutation_operater(self, chromosome):
@@ -155,7 +160,7 @@ class GA_scheduling():
             population = self.sort_population(population)
         print(f"minimize {self.params['type']} initialzed population : \n", population, "\n\n")
 
-        while 1:
+        while generation < 2:
             offsprings = []
             for i in range(self.params["NUM_OFFSPRING"]):
                             
