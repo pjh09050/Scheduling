@@ -7,7 +7,7 @@ params = {
     'MUT': 0.1,  # 변이확률
     'END' : 0.9,  # 설정한 비율만큼 sequence가 수렴하면 탐색을 멈추게 하는 파라미터
     'POP_SIZE' : 100,  # population size 10 ~ 100
-    'NUM_OFFSPRING' : 5, # 한 세대에 발생하는 자식 chromosome의 수
+    'NUM_OFFSPRING' : 10, # 한 세대에 발생하는 자식 chromosome의 수
     'CHANGE' : 3, # 다음 세대로 가는 자식 교체 수
     'type' : 'total_flowtime', # 원하는 목적함수
     'num_job' : 10 # job 갯수
@@ -87,17 +87,14 @@ class GA_scheduling():
         offspring_cho = [0] * self.params['num_job']
         mom_ch = list(mom_cho)
         dad_ch = list(dad_cho)
-        print('1', mom_ch, dad_ch)
         k1 = random.randint(0, len(mom_ch)/2-1)
         k2 = random.randint(len(mom_ch)/2, len(mom_ch)-1) 
-        print('k', k1,k2)
         offspring_cho[k1:k2] = mom_ch[k1:k2]
         index = k2
         for i in range(len(dad_ch)):
             if dad_ch[i] not in offspring_cho:
                 offspring_cho[index % len(offspring_cho)] = dad_ch[i]
                 index += 1
-        print('2', offspring_cho)
         return offspring_cho
 
     def mutation_operater(self, chromosome):
@@ -160,7 +157,7 @@ class GA_scheduling():
             population = self.sort_population(population)
         print(f"minimize {self.params['type']} initialzed population : \n", population, "\n\n")
 
-        while generation < 2:
+        while 1:
             offsprings = []
             for i in range(self.params["NUM_OFFSPRING"]):
                             
