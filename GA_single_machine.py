@@ -64,7 +64,7 @@ class GA_scheduling():
         # 토너먼트 선택(t보다 작으면 두 염색체 중 품질이 좋은 것을 선택)
         mom_ch = 0
         dad_ch = 0
-        t = 0.7
+        t = 0.6
         for i in range(2):
             sample = random.sample(population, 2)
             sample = self.sort_population(sample)
@@ -79,6 +79,11 @@ class GA_scheduling():
                     dad_ch = sample[0][0]
                 else:
                     dad_ch = sample[1][0]
+
+        # 품질 비례 룰렛휠 선택
+        k = 0
+        # 순위 기반 선택
+        k = 0
         return mom_ch, dad_ch
 
     def crossover_operater(self, mom_cho, dad_cho):
@@ -105,21 +110,21 @@ class GA_scheduling():
 
     def mutation_operater(self, chromosome):
         # exchange mutation
-        ex_mu1 = random.randint(0, self.params['num_job']-1)
-        ex_mu2 = random.randint(0, self.params['num_job']-1)
-        while ex_mu1 == ex_mu2:
-            ex_mu2 = random.randint(0, self.params['num_job']-1)
-        chromosome[ex_mu1],chromosome[ex_mu2] = chromosome[ex_mu2], chromosome[ex_mu1]
+        # ex_mu1 = random.randint(0, self.params['num_job']-1)
+        # ex_mu2 = random.randint(0, self.params['num_job']-1)
+        # while ex_mu1 == ex_mu2:
+        #     ex_mu2 = random.randint(0, self.params['num_job']-1)
+        # chromosome[ex_mu1],chromosome[ex_mu2] = chromosome[ex_mu2], chromosome[ex_mu1]
 
         # scramble mutation
-        # sc_mu1 = random.randint(0, self.params['num_job'] - 3)
-        # sc_mu2 = random.randint(sc_mu1 + 1, self.params['num_job'] - 1)
-        # while sc_mu2 - sc_mu1 < 2:
-        #     sc_mu1 = random.randint(0, self.params['num_job'] - 3)
-        #     sc_mu2 = random.randint(sc_mu1 + 1, self.params['num_job'] - 1)
-        # scramble_list = chromosome[sc_mu1:sc_mu2]
-        # random.shuffle(scramble_list)
-        # chromosome[sc_mu1:sc_mu2] = scramble_list
+        sc_mu1 = random.randint(0, self.params['num_job'] - 3)
+        sc_mu2 = random.randint(sc_mu1 + 1, self.params['num_job'] - 1)
+        while sc_mu2 - sc_mu1 < 2:
+            sc_mu1 = random.randint(0, self.params['num_job'] - 3)
+            sc_mu2 = random.randint(sc_mu1 + 1, self.params['num_job'] - 1)
+        scramble_list = chromosome[sc_mu1:sc_mu2]
+        random.shuffle(scramble_list)
+        chromosome[sc_mu1:sc_mu2] = scramble_list
         return chromosome
 
     def replacement_operator(self, population, offsprings):
