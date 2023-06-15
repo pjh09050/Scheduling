@@ -84,6 +84,7 @@ class GA_scheduling():
         k = 0
         # 순위 기반 선택
         k = 0
+
         return mom_ch, dad_ch
 
     def crossover_operater(self, mom_cho, dad_cho):
