@@ -61,9 +61,9 @@ class GA_scheduling():
         return population
 
     def selection_operater(self, population):
-        # 토너먼트 선택(t보다 작으면 두 염색체 중 품질이 좋은 것을 선택)
         mom_ch = 0
         dad_ch = 0
+        # 토너먼트 선택(t보다 작으면 두 염색체 중 품질이 좋은 것을 선택)
         t = 0.6
         for i in range(2):
             sample = random.sample(population, 2)
@@ -79,11 +79,6 @@ class GA_scheduling():
                     dad_ch = sample[0][0]
                 else:
                     dad_ch = sample[1][0]
-
-        # 품질 비례 룰렛휠 선택
-        k = 0
-        # 순위 기반 선택
-        k = 0
 
         return mom_ch, dad_ch
 
