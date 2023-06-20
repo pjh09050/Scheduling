@@ -54,7 +54,7 @@ class GA_scheduling():
             population_average_fitness += population[i][1]
         population_average_fitness = population_average_fitness / len(population)
         print("population 평균 fitness: {}".format(population_average_fitness))
-        return population_average_fitness # 그래프 그리기 위한 return 
+        return population_average_fitness
     
     def sort_population(self, population):
         population.sort(key=lambda x:x[1])
@@ -83,7 +83,6 @@ class GA_scheduling():
         return mom_ch, dad_ch
 
     def crossover_operater(self, mom_cho, dad_cho):
-        # todo: 본인이 원하는 교차연산 구현(point, pmx 등), 자식해 반환
         # 순서 교차
         mom_ch = list(mom_cho)
         dad_ch = list(dad_cho)
@@ -100,7 +99,7 @@ class GA_scheduling():
             else:
                 index += 1
             if index == len(offspring_cho):
-                index = 0 
+                index = 0
 
         return offspring_cho
 
