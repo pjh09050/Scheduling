@@ -1,18 +1,22 @@
 import pandas as pd
 import numpy as np
 import random
+import time
 import matplotlib.pyplot as plt
+plt.rc('font', family='Malgun Gothic')
+import time
+import datetime
 
 objective_list = ['total_flowtime', 'makespan', 'tardy_job', 'total_tardiness', 'total_weighted_tardiness']
 
 params = {
     'MUT': 0.15,  # 변이확률
-    'END' : 0.9,  # 설정한 비율만큼 sequence가 수렴하면 탐색을 멈추게 하는 파라미터
+    'END' : 0.7,  # 설정한 비율만큼 sequence가 수렴하면 탐색을 멈추게 하는 파라미터
     'POP_SIZE' : 100,  # population size 10 ~ 100
     'NUM_OFFSPRING' : 30, # 한 세대에 발생하는 자식 chromosome의 수
     'CHANGE' : 10, # 다음 세대로 가는 자식 교체 수
     'type' : objective_list[3], # 원하는 목적함수
-    'num_job' : 10 # job 갯수
+    'num_job' : 100 # job 갯수
     }
 # ------------------------------
 # 같은 문제 job갯수 100개 total_tardiness (제한시간 : 15분)
@@ -57,7 +61,7 @@ class GA_scheduling():
         for i in range(len(population)):
             population_average_fitness += population[i][1]
         population_average_fitness = population_average_fitness / len(population)
-        print("population 평균 fitness: {}".format(population_average_fitness))
+        #print("population 평균 fitness: {}".format(population_average_fitness))
         return population_average_fitness
     
     def sort_population(self, population):
@@ -117,12 +121,13 @@ class GA_scheduling():
     
     # 해 탐색(GA) 함수
     def search(self):
+        start = time.time()
         generation = 0  # 현재 세대 수
         population = [] # 해집단
         offsprings = [] # 자식해집단
         average = []
 
-        count = 1
+        generation = 1
         count_avg = []
 
         # 1. 초기화: 랜덤하게 해를 초기화
@@ -154,7 +159,7 @@ class GA_scheduling():
             population = self.replacement_operator(population, offsprings)
             generation += 1
 
-            self.print_average_fitness(population) # population의 평균 fitness를 출력함으로써 수렴하는 모습을 보기 위한 기능
+            # self.print_average_fitness(population) # population의 평균 fitness를 출력함으로써 수렴하는 모습을 보기 위한 기능
             #average.append(self.print_average_fitness(population)) # population의 평균 fitness 그래프를 그리기 위한 average에 추가
             #average.append(population[-1][1])
             average.append(population[0][1])
@@ -165,18 +170,43 @@ class GA_scheduling():
                 if population[0][1] == population[i][1]:
                     same += 1
             if same >= len(population) * self.params["END"]: # END비율만큼 수렴하면 정지
+                plt.plot(average)
+                plt.ylim(average[-1]*0.99, average[0]*1.005)
+                plt.show()
+                # 최종적으로 얼마나 소요되었는지의 세대수, 수렴된 chromosome과 fitness를 출력
+                print("탐색이 완료되었습니다. \t 최종 세대수: {},\t 최종 해: {},\t 최종 적합도: {}".format(generation, population[0][0], population[0][1]))
+                print('최종 population :', population)
+                end = time.time()
+                sec = (end-start)
+                result = datetime.timedelta(seconds=sec)
+                print('소요 시간 :', result)
                 break
 
-        # 최종적으로 얼마나 소요되었는지의 세대수, 수렴된 chromosome과 fitness를 출력
-        print("탐색이 완료되었습니다. \t 최종 세대수: {},\t 최종 해: {},\t 최종 적합도: {}".format(generation, population[0][0], population[0][1]))
-        print('최종 population :', population)
-        # population의 평균 fitness 그래프
-        plt.plot(average)
-        plt.ylim(average[-1], average[0])
-        plt.show()
+            # 7. plot update
+            x = np.linspace(0,300,population[0][1])
+            y = np.arange(len(x))
+            if generation%100 == 0:
+                count_avg.append(population[0][1])
+                if generation//100 == 1:
+                    plt.ion()
+                    fig = plt.figure(figsize=(12,6))
+                    ax = fig.add_subplot(111)
+                    line1, = ax.plot(x, y)
+                    plt.title('Genetic Algorithm', fontsize=16, fontweight='bold')
+                    plt.xlabel('generation(단위:100)', fontsize=12)
+                    plt.ylabel('fitness', fontsize=12)
+                else: 
+                    line1.set_xdata(np.arange(len(count_avg)))
+                    line1.set_ydata(count_avg)
+                    ax.set_xlim(0, generation//100)
+                    ax.set_ylim(population[0][1]*0.99, average[0]*1.005)
+                    fig.canvas.draw()
+                    fig.canvas.flush_events()
+                    time.sleep(0.1)
+
 
 if __name__ == "__main__":
-    input_data = pd.read_csv('10_job_normal data.csv', index_col=0)
+    input_data = pd.read_csv('100_job_uniform data.csv', index_col=0)
     df = input_data
     ga = GA_scheduling(params)
     ga.search()
