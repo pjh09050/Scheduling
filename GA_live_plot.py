@@ -11,10 +11,10 @@ objective_list = ['total_flowtime', 'makespan', 'tardy_job', 'total_tardiness', 
 
 params = {
     'MUT': 0.15,  # 변이확률
-    'END' : 0.7,  # 설정한 비율만큼 sequence가 수렴하면 탐색을 멈추게 하는 파라미터
+    'END' : 0.8,  # 설정한 비율만큼 sequence가 수렴하면 탐색을 멈추게 하는 파라미터
     'POP_SIZE' : 100,  # population size 10 ~ 100
-    'NUM_OFFSPRING' : 30, # 한 세대에 발생하는 자식 chromosome의 수
-    'CHANGE' : 10, # 다음 세대로 가는 자식 교체 수
+    'NUM_OFFSPRING' : 10, # 한 세대에 발생하는 자식 chromosome의 수
+    'CHANGE' : 5, # 다음 세대로 가는 자식 교체 수
     'type' : objective_list[3], # 원하는 목적함수
     'num_job' : 100 # job 갯수
     }
@@ -206,7 +206,7 @@ class GA_scheduling():
 
 
 if __name__ == "__main__":
-    input_data = pd.read_csv('100_job_uniform data.csv', index_col=0)
+    input_data = pd.read_csv('100_job_uniform data.csv', index_col=0) # 최적 28096
     df = input_data
     ga = GA_scheduling(params)
     ga.search()
