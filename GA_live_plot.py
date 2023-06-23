@@ -11,15 +11,15 @@ objective_list = ['total_flowtime', 'makespan', 'tardy_job', 'total_tardiness', 
 
 params = {
     'MUT': 0.15,  # 변이확률
-    'END' : 0.8,  # 설정한 비율만큼 sequence가 수렴하면 탐색을 멈추게 하는 파라미터
+    'END' : 0.9,  # 설정한 비율만큼 sequence가 수렴하면 탐색을 멈추게 하는 파라미터
     'POP_SIZE' : 100,  # population size 10 ~ 100
-    'NUM_OFFSPRING' : 10, # 한 세대에 발생하는 자식 chromosome의 수
-    'CHANGE' : 5, # 다음 세대로 가는 자식 교체 수
+    'NUM_OFFSPRING' : 20, # 한 세대에 발생하는 자식 chromosome의 수
+    'CHANGE' : 7, # 다음 세대로 가는 자식 교체 수
     'type' : objective_list[3], # 원하는 목적함수
     'num_job' : 100 # job 갯수
     }
 # ------------------------------
-# 같은 문제 job갯수 100개 total_tardiness (제한시간 : 15분)
+# 같은 문제 job갯수 100개 total_tardiness (제한시간 : 10분)
 
 class GA_scheduling():
     def __init__(self, parameters):
@@ -113,7 +113,9 @@ class GA_scheduling():
         result_population = []
         population = self.sort_population(population)
         # 자식해 집단 중 뽑고 싶은 자식 수를 파라미터로 받아 가장 안좋은 해 대체
-        offsprings = random.sample(offsprings, self.params["CHANGE"])
+        offsprings = self.sort_population(offsprings)
+        offsprings = offsprings[:self.params["CHANGE"]]
+        #offsprings = random.sample(offsprings, self.params["CHANGE"])
         for i in range(len(offsprings)):
             population[-(i+1)] = offsprings[i]
         result_population = self.sort_population(population)
@@ -126,8 +128,6 @@ class GA_scheduling():
         population = [] # 해집단
         offsprings = [] # 자식해집단
         average = []
-
-        generation = 1
         count_avg = []
 
         # 1. 초기화: 랜덤하게 해를 초기화
@@ -137,7 +137,7 @@ class GA_scheduling():
             fitness = self.get_fitness(chromosome)
             population.append([chromosome, fitness])
             population = self.sort_population(population)
-        print(f"minimize {self.params['type']} initialzed population : \n", population, "\n\n")
+        #print(f"minimize {self.params['type']} initialzed population : \n", population, "\n\n")
 
         while 1:
             offsprings = []
@@ -166,27 +166,39 @@ class GA_scheduling():
 
             # 6. 알고리즘 종료 조건 판단
             same = 0
+            end = time.time()
+            sec = (end-start)
+            result = datetime.timedelta(seconds=sec)
             for i in range(self.params["POP_SIZE"]):
                 if population[0][1] == population[i][1]:
                     same += 1
-            if same >= len(population) * self.params["END"]: # END비율만큼 수렴하면 정지
+            # END비율만큼 수렴하면 정지
+            if same >= len(population) * self.params["END"]: 
                 plt.plot(average)
                 plt.ylim(average[-1]*0.99, average[0]*1.005)
                 plt.show()
                 # 최종적으로 얼마나 소요되었는지의 세대수, 수렴된 chromosome과 fitness를 출력
                 print("탐색이 완료되었습니다. \t 최종 세대수: {},\t 최종 해: {},\t 최종 적합도: {}".format(generation, population[0][0], population[0][1]))
-                print('최종 population :', population)
-                end = time.time()
-                sec = (end-start)
-                result = datetime.timedelta(seconds=sec)
+                #print('최종 population :', population)
                 print('소요 시간 :', result)
                 break
 
-            # 7. plot update
+            # 10분 지나면 종료
+            if int(sec) == 600:
+                plt.plot(average)
+                plt.ylim(average[-1]*0.99, average[0]*1.005)
+                plt.show()
+                print("탐색이 완료되었습니다. \t 최종 세대수: {},\t 최종 해: {},\t 최종 적합도: {}".format(generation, population[0][0], population[0][1]))
+                #print('최종 population :', population)
+                print('소요 시간 :', result)
+                break
+
+            # 7. live plot update
             x = np.linspace(0,300,population[0][1])
             y = np.arange(len(x))
             if generation%100 == 0:
                 count_avg.append(population[0][1])
+                print("{} generation population 최소 fitness: {}".format(generation,population[0][1]))
                 if generation//100 == 1:
                     plt.ion()
                     fig = plt.figure(figsize=(12,6))
@@ -206,7 +218,7 @@ class GA_scheduling():
 
 
 if __name__ == "__main__":
-    input_data = pd.read_csv('100_job_uniform data.csv', index_col=0) # 최적 28096
+    input_data = pd.read_csv('100_job_uniform data.csv', index_col=0) # 10분만 돌렸을 때 지금까지 최적 27950(0.15, 20, 7)
     df = input_data
     ga = GA_scheduling(params)
     ga.search()
