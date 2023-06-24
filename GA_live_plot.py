@@ -11,10 +11,10 @@ objective_list = ['total_flowtime', 'makespan', 'tardy_job', 'total_tardiness', 
 
 params = {
     'MUT': 0.15,  # 변이확률
-    'END' : 0.9,  # 설정한 비율만큼 sequence가 수렴하면 탐색을 멈추게 하는 파라미터
+    'END' : 0.95,  # 설정한 비율만큼 sequence가 수렴하면 탐색을 멈추게 하는 파라미터
     'POP_SIZE' : 100,  # population size 10 ~ 100
-    'NUM_OFFSPRING' : 20, # 한 세대에 발생하는 자식 chromosome의 수
-    'CHANGE' : 7, # 다음 세대로 가는 자식 교체 수
+    'NUM_OFFSPRING' : 15, # 한 세대에 발생하는 자식 chromosome의 수
+    'CHANGE' : 10, # 다음 세대로 가는 자식 교체 수
     'type' : objective_list[3], # 원하는 목적함수
     'num_job' : 100 # job 갯수
     }
@@ -99,23 +99,23 @@ class GA_scheduling():
 
     def mutation_operater(self, chromosome):
         # exchange mutation
-        # ex_mu1, ex_mu2 = sorted(random.sample(range(self.params['num_job']), 2)) # 0~9 중 2개 선택
-        # chromosome[ex_mu1],chromosome[ex_mu2] = chromosome[ex_mu2], chromosome[ex_mu1]
+        ex_mu1, ex_mu2 = sorted(random.sample(range(self.params['num_job']), 2)) # 0~9 중 2개 선택
+        chromosome[ex_mu1],chromosome[ex_mu2] = chromosome[ex_mu2], chromosome[ex_mu1]
 
         # scramble mutation
-        sc_mu1, sc_mu2 = sorted(random.sample(range(self.params['num_job']), 2)) # 0~9 중 2개 선택
-        scramble_list = chromosome[sc_mu1:sc_mu2]
-        random.shuffle(scramble_list)
-        chromosome[sc_mu1:sc_mu2] = scramble_list
+        # sc_mu1, sc_mu2 = sorted(random.sample(range(self.params['num_job']), 2)) # 0~9 중 2개 선택
+        # scramble_list = chromosome[sc_mu1:sc_mu2]
+        # random.shuffle(scramble_list)
+        # chromosome[sc_mu1:sc_mu2] = scramble_list
         return chromosome
 
     def replacement_operator(self, population, offsprings):
         result_population = []
         population = self.sort_population(population)
         # 자식해 집단 중 뽑고 싶은 자식 수를 파라미터로 받아 가장 안좋은 해 대체
-        offsprings = self.sort_population(offsprings)
-        offsprings = offsprings[:self.params["CHANGE"]]
-        #offsprings = random.sample(offsprings, self.params["CHANGE"])
+        #offsprings = self.sort_population(offsprings)
+        #offsprings = offsprings[:self.params["CHANGE"]]
+        offsprings = random.sample(offsprings, self.params["CHANGE"])
         for i in range(len(offsprings)):
             population[-(i+1)] = offsprings[i]
         result_population = self.sort_population(population)
@@ -174,9 +174,9 @@ class GA_scheduling():
                     same += 1
             # END비율만큼 수렴하면 정지
             if same >= len(population) * self.params["END"]: 
-                plt.plot(average)
-                plt.ylim(average[-1]*0.99, average[0]*1.005)
-                plt.show()
+                # plt.plot(average)
+                # plt.ylim(average[-1]*0.99, average[0]*1.005)
+                # plt.show()
                 # 최종적으로 얼마나 소요되었는지의 세대수, 수렴된 chromosome과 fitness를 출력
                 print("탐색이 완료되었습니다. \t 최종 세대수: {},\t 최종 해: {},\t 최종 적합도: {}".format(generation, population[0][0], population[0][1]))
                 #print('최종 population :', population)
@@ -184,14 +184,11 @@ class GA_scheduling():
                 break
 
             # 10분 지나면 종료
-            if int(sec) == 600:
-                plt.plot(average)
-                plt.ylim(average[-1]*0.99, average[0]*1.005)
-                plt.show()
-                print("탐색이 완료되었습니다. \t 최종 세대수: {},\t 최종 해: {},\t 최종 적합도: {}".format(generation, population[0][0], population[0][1]))
-                #print('최종 population :', population)
-                print('소요 시간 :', result)
-                break
+            # if int(sec) == 600:
+            #     print("탐색이 완료되었습니다. \t 최종 세대수: {},\t 최종 해: {},\t 최종 적합도: {}".format(generation, population[0][0], population[0][1]))
+            #     #print('최종 population :', population)
+            #     print('소요 시간 :', result)
+            #     break
 
             # 7. live plot update
             x = np.linspace(0,300,population[0][1])
@@ -199,26 +196,29 @@ class GA_scheduling():
             if generation%100 == 0:
                 count_avg.append(population[0][1])
                 print("{} generation population 최소 fitness: {}".format(generation,population[0][1]))
-                if generation//100 == 1:
-                    plt.ion()
-                    fig = plt.figure(figsize=(12,6))
-                    ax = fig.add_subplot(111)
-                    line1, = ax.plot(x, y)
-                    plt.title('Genetic Algorithm', fontsize=16, fontweight='bold')
-                    plt.xlabel('generation(단위:100)', fontsize=12)
-                    plt.ylabel('fitness', fontsize=12)
-                else: 
-                    line1.set_xdata(np.arange(len(count_avg)))
-                    line1.set_ydata(count_avg)
-                    ax.set_xlim(0, generation//100)
-                    ax.set_ylim(population[0][1]*0.99, average[0]*1.005)
-                    fig.canvas.draw()
-                    fig.canvas.flush_events()
-                    time.sleep(0.1)
-
+                # if generation//100 == 1:
+                #     plt.ion()
+                #     fig = plt.figure(figsize=(12,6))
+                #     ax = fig.add_subplot(111)
+                #     line1, = ax.plot(x, y)
+                #     plt.title('Genetic Algorithm', fontsize=16, fontweight='bold')
+                #     plt.xlabel('generation(단위:100)', fontsize=12)
+                #     plt.ylabel('fitness', fontsize=12)
+                # else: 
+                #     line1.set_xdata(np.arange(len(count_avg)))
+                #     line1.set_ydata(count_avg)
+                #     ax.set_xlim(0, generation//100)
+                #     ax.set_ylim(population[0][1]*0.99, average[0]*1.005)
+                #     fig.canvas.draw()
+                #     fig.canvas.flush_events()
+                #     time.sleep(0.1)
+        plt.figure(figsize=(12,6))
+        plt.plot(average)
+        plt.ylim(average[-1]*0.99, average[0]*1.005)
+        plt.show()
 
 if __name__ == "__main__":
-    input_data = pd.read_csv('100_job_uniform data.csv', index_col=0) # 10분만 돌렸을 때 지금까지 최적 27950(0.15, 20, 7)
+    input_data = pd.read_csv('100_job_uniform data.csv', index_col=0) # 지금까지 최적 27836(end 비율 0.95로 하니까 거의 계속 돌아감)
     df = input_data
     ga = GA_scheduling(params)
     ga.search()
