@@ -11,7 +11,7 @@ objective_list = ['total_flowtime', 'makespan', 'tardy_job', 'total_tardiness', 
 
 params = {
     'MUT': 0.15,  # 변이확률
-    'END' : 0.95,  # 설정한 비율만큼 sequence가 수렴하면 탐색을 멈추게 하는 파라미터
+    'END' : 0.9,  # 설정한 비율만큼 sequence가 수렴하면 탐색을 멈추게 하는 파라미터
     'POP_SIZE' : 100,  # population size 10 ~ 100
     'NUM_OFFSPRING' : 15, # 한 세대에 발생하는 자식 chromosome의 수
     'CHANGE' : 10, # 다음 세대로 가는 자식 교체 수
@@ -113,9 +113,9 @@ class GA_scheduling():
         result_population = []
         population = self.sort_population(population)
         # 자식해 집단 중 뽑고 싶은 자식 수를 파라미터로 받아 가장 안좋은 해 대체
-        #offsprings = self.sort_population(offsprings)
-        #offsprings = offsprings[:self.params["CHANGE"]]
-        offsprings = random.sample(offsprings, self.params["CHANGE"])
+        offsprings = self.sort_population(offsprings)
+        offsprings = offsprings[:self.params["CHANGE"]]
+        #offsprings = random.sample(offsprings, self.params["CHANGE"])
         for i in range(len(offsprings)):
             population[-(i+1)] = offsprings[i]
         result_population = self.sort_population(population)
@@ -173,22 +173,22 @@ class GA_scheduling():
                 if population[0][1] == population[i][1]:
                     same += 1
             # END비율만큼 수렴하면 정지
-            if same >= len(population) * self.params["END"]: 
-                # plt.plot(average)
-                # plt.ylim(average[-1]*0.99, average[0]*1.005)
-                # plt.show()
-                # 최종적으로 얼마나 소요되었는지의 세대수, 수렴된 chromosome과 fitness를 출력
-                print("탐색이 완료되었습니다. \t 최종 세대수: {},\t 최종 해: {},\t 최종 적합도: {}".format(generation, population[0][0], population[0][1]))
-                #print('최종 population :', population)
-                print('소요 시간 :', result)
-                break
-
-            # 10분 지나면 종료
-            # if int(sec) == 600:
+            # if same >= len(population) * self.params["END"]: 
+            #     # plt.plot(average)
+            #     # plt.ylim(average[-1]*0.99, average[0]*1.005)
+            #     # plt.show()
+            #     # 최종적으로 얼마나 소요되었는지의 세대수, 수렴된 chromosome과 fitness를 출력
             #     print("탐색이 완료되었습니다. \t 최종 세대수: {},\t 최종 해: {},\t 최종 적합도: {}".format(generation, population[0][0], population[0][1]))
             #     #print('최종 population :', population)
             #     print('소요 시간 :', result)
             #     break
+
+            # 10분 지나면 종료
+            if int(sec) == 600:
+                print("탐색이 완료되었습니다. \t 최종 세대수: {},\t 최종 해: {},\t 최종 적합도: {}".format(generation, population[0][0], population[0][1]))
+                #print('최종 population :', population)
+                print('소요 시간 :', result)
+                break
 
             # 7. live plot update
             x = np.linspace(0,300,population[0][1])
