@@ -19,7 +19,9 @@ params = {
     'num_job' : 100 # job 갯수
     }
 # ------------------------------
-# 같은 문제 job갯수 100개 total_tardiness (제한시간 : 10분)
+# 100job을 spt로 풀어서 ga랑 비교하기
+# 대치연산 -> 자식이랑 비교해서 대치?
+# 선택연산, 교차연산 더 만들기
 
 class GA_scheduling():
     def __init__(self, parameters):
