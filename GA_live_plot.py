@@ -11,7 +11,7 @@ objective_list = ['total_flowtime', 'makespan', 'tardy_job', 'total_tardiness', 
 
 params = {
     'MUT': 0.2,  # 변이확률
-    'END' : 0.98,  # 설정한 비율만큼 sequence가 수렴하면 탐색을 멈추게 하는 파라미터
+    'END' : 0.95,  # 설정한 비율만큼 sequence가 수렴하면 탐색을 멈추게 하는 파라미터
     'POP_SIZE' : 100,  # population size 10 ~ 100
     'NUM_OFFSPRING' : 15, # 한 세대에 발생하는 자식 chromosome의 수
     'CHANGE' : 10, # 다음 세대로 가는 자식 교체 수
@@ -69,33 +69,33 @@ class GA_scheduling():
 
     def selection_operater(self, population):
         # 토너먼트 선택(t보다 작으면 두 염색체 중 품질이 좋은 것을 선택)
-        # parents_list = []
-        # t = 0.7
-        # for i in range(2):
-        #     sample = random.sample(population, 2)
-        #     sample = self.sort_population(sample)
-        #     rand = random.uniform(0,1)
-        #     if rand < t :
-        #         parents_list.append(sample[0][0])
-        #     else:
-        #         parents_list.append(sample[1][0])
-        # return parents_list[0], parents_list[1]
+        parents_list = []
+        t = 0.7
+        for i in range(2):
+            sample = random.sample(population, 2)
+            sample = self.sort_population(sample)
+            rand = random.uniform(0,1)
+            if rand < t :
+                parents_list.append(sample[0][0])
+            else:
+                parents_list.append(sample[1][0])
+        return parents_list[0], parents_list[1]
 
         # 룰렛휠
-        parents_list = []
-        k_pressure = 2
-        roulette_list = [(population[-1][1] - population[i][1]) + (population[-1][1] - population[0][1])/(k_pressure-1) for i in range(len(population))]
+        # parents_list = []
+        # k_pressure = 2
+        # roulette_list = [(population[-1][1] - population[i][1]) + (population[-1][1] - population[0][1])/(k_pressure-1) for i in range(len(population))]
 
-        for _ in range(2):
-            r = random.uniform(0, sum(roulette_list))
-            for i, roullette in enumerate(roulette_list):
-                r -= roullette
-                if r <= 0:
-                    parents_list.append(population[i])
-                    break
-            if len(parents_list) == 2 and parents_list[0] != parents_list[1]:
-                break   
-        return parents_list[0][0], parents_list[1][0]
+        # for _ in range(2):
+        #     r = random.uniform(0, sum(roulette_list))
+        #     for i, roullette in enumerate(roulette_list):
+        #         r -= roullette
+        #         if r <= 0:
+        #             parents_list.append(population[i])
+        #             break
+        #     if len(parents_list) == 2 and parents_list[0] != parents_list[1]:
+        #         break   
+        # return parents_list[0][0], parents_list[1][0]
 
         # 순위 기반
         # parents_list = []
@@ -214,6 +214,8 @@ class GA_scheduling():
         offsprings = [] # 자식해집단
         average = []
         count_avg = []
+        a = True
+        b = True
 
         # 1. 초기화: 랜덤하게 해를 초기화
         for i in range(self.params["POP_SIZE"]):
@@ -258,22 +260,31 @@ class GA_scheduling():
                 #print('최종 population :', population)
                 result_time = datetime.timedelta(seconds=(sec))
                 print('소요 시간 :', result_time)
+                print('같은 해 갯수 : ', same)
                 break
+            
+            if population[0][1] == 27834 and b == True:
+                print("탐색이 완료되었습니다. \t 최종 세대수: {},\t 최종 해: {},\t 최종 적합도: {}".format(generation, population[0][0], population[0][1]))
+                #print('최종 population :', population)
+                result_time = datetime.timedelta(seconds=(sec))
+                print('소요 시간 :', result_time)
+                b = False
 
             # END비율만큼 수렴하면 정지
-            # same = 0
-            # for i in range(self.params["POP_SIZE"]):
-            #     if population[0][1] == population[i][1]:
-            #         same += 1
+            same = 0
+            for i in range(self.params["POP_SIZE"]):
+                if population[0][1] == population[i][1]:
+                    same += 1
 
-            # if same >= len(population) * self.params["END"]: 
-            #     # 최종적으로 얼마나 소요되었는지의 세대수, 수렴된 chromosome과 fitness를 출력
-            #     print("탐색이 완료되었습니다. \t 최종 세대수: {},\t 최종 해: {},\t 최종 적합도: {}".format(generation, population[0][0], population[0][1]))
-            #     #print('최종 population :', population)
-            #     print('같은 해 갯수 : ', same)
-            #     result_time = datetime.timedelta(seconds=(sec))
-            #     print('소요 시간 :', result_time)
-            #     break
+            if same >= len(population) * self.params["END"] and a == True: 
+                # 최종적으로 얼마나 소요되었는지의 세대수, 수렴된 chromosome과 fitness를 출력
+                print("탐색이 완료되었습니다. \t 최종 세대수: {},\t 최종 해: {},\t 최종 적합도: {}".format(generation, population[0][0], population[0][1]))
+                #print('최종 population :', population)
+                print('같은 해 갯수 : ', same)
+                result_time = datetime.timedelta(seconds=(sec))
+                print('소요 시간 :', result_time)
+                a = False
+                #break
 
             # 7. live plot update
             x = np.linspace(0,300,population[0][1])
