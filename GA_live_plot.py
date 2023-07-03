@@ -69,17 +69,17 @@ class GA_scheduling():
 
     def selection_operater(self, population):
         # 토너먼트 선택(t보다 작으면 두 염색체 중 품질이 좋은 것을 선택)
-        parents_list = []
-        t = 0.7
-        for i in range(2):
-            sample = random.sample(population, 2)
-            sample = self.sort_population(sample)
-            rand = random.uniform(0,1)
-            if rand < t :
-                parents_list.append(sample[0][0])
-            else:
-                parents_list.append(sample[1][0])
-        return parents_list[0], parents_list[1]
+        # parents_list = []
+        # t = 0.7
+        # for i in range(2):
+        #     sample = random.sample(population, 2)
+        #     sample = self.sort_population(sample)
+        #     rand = random.uniform(0,1)
+        #     if rand < t :
+        #         parents_list.append(sample[0][0])
+        #     else:
+        #         parents_list.append(sample[1][0])
+        # return parents_list[0], parents_list[1]
 
         # 룰렛휠
         # parents_list = []
@@ -98,19 +98,19 @@ class GA_scheduling():
         # return parents_list[0][0], parents_list[1][0]
 
         # 순위 기반
-        # parents_list = []
-        # n = len(population)
-        # rank_list = [(population[0][1] + (i - 1)*(population[-1][1] - population[0][1])/(n - 1)) for i in range(n)]
+        parents_list = []
+        n = len(population)
+        rank_list = [(population[0][1] + (i - 1)*(population[-1][1] - population[0][1])/(n - 1)) for i in range(n)]
 
-        # for _ in range(2):
-        #     r = random.uniform(0, sum(rank_list))
-        #     for i, rank in enumerate(rank_list):
-        #         r -= rank
-        #         if r <= 0:
-        #             parents_list.append(population[i])
-        #     if len(parents_list) == 2 and parents_list[0] != parents_list[1]:
-        #         break
-        # return parents_list[0][0], parents_list[1][0]
+        for _ in range(2):
+            r = random.uniform(0, sum(rank_list))
+            for i, rank in enumerate(rank_list):
+                r -= rank
+                if r <= 0:
+                    parents_list.append(population[i])
+            if len(parents_list) == 2 and parents_list[0] != parents_list[1]:
+                break
+        return parents_list[0][0], parents_list[1][0]
 
     def crossover_operater(self, mom_cho, dad_cho):
         # 순서 교차
@@ -166,14 +166,14 @@ class GA_scheduling():
 
     def mutation_operater(self, chromosome):
         # exchange mutation
-        # ex_mu1, ex_mu2 = sorted(random.sample(range(self.params['num_job']), 2)) 
-        # chromosome[ex_mu1],chromosome[ex_mu2] = chromosome[ex_mu2], chromosome[ex_mu1]
+        ex_mu1, ex_mu2 = sorted(random.sample(range(self.params['num_job']), 2)) 
+        chromosome[ex_mu1],chromosome[ex_mu2] = chromosome[ex_mu2], chromosome[ex_mu1]
 
         # scramble mutation
-        sc_mu1, sc_mu2 = sorted(random.sample(range(self.params['num_job']), 2))
-        scramble_list = chromosome[sc_mu1:sc_mu2]
-        random.shuffle(scramble_list)
-        chromosome[sc_mu1:sc_mu2] = scramble_list
+        # sc_mu1, sc_mu2 = sorted(random.sample(range(self.params['num_job']), 2))
+        # scramble_list = chromosome[sc_mu1:sc_mu2]
+        # random.shuffle(scramble_list)
+        # chromosome[sc_mu1:sc_mu2] = scramble_list
         return chromosome
 
     def replacement_operator(self, population, offsprings):
