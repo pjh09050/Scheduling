@@ -95,34 +95,34 @@ class GA_scheduling():
         # return parents_list[0], parents_list[1]
 
         # 룰렛휠
-        # parents_list = []
-        # k_pressure = 2
-        # roulette_list = [(population[-1][1] - population[i][1]) + (population[-1][1] - population[0][1])/(k_pressure-1) for i in range(len(population))]
-
-        # for _ in range(2):
-        #     r = random.uniform(0, sum(roulette_list))
-        #     for i, roullette in enumerate(roulette_list):
-        #         r -= roullette
-        #         if r <= 0:
-        #             parents_list.append(population[i])
-        #             break
-        #     if len(parents_list) == 2 and parents_list[0] != parents_list[1]:
-        #         break   
-        # return parents_list[0][0], parents_list[1][0]
-
-        # 순위 기반
         parents_list = []
-        n = len(population)
-        rank_list = [(population[0][1] + (i - 1)*(population[-1][1] - population[0][1])/(n - 1)) for i in range(n)]
+        k_pressure = 2
+        roulette_list = [(population[-1][1] - population[i][1]) + (population[-1][1] - population[0][1])/(k_pressure-1) for i in range(len(population))]
+
         for _ in range(2):
-            r = random.uniform(rank_list[0], sum(rank_list))
-            for i, rank in enumerate(rank_list):
-                r -= rank
+            r = random.uniform(0, sum(roulette_list))
+            for i, roullette in enumerate(roulette_list):
+                r -= roullette
                 if r <= 0:
                     parents_list.append(population[i])
-                if len(parents_list) == 2 and parents_list[0] != parents_list[1]:
                     break
+                if len(parents_list) == 2 and parents_list[0] != parents_list[1]:
+                    break   
         return parents_list[0][0], parents_list[1][0]
+
+        # 순위 기반
+        # parents_list = []
+        # n = len(population)
+        # rank_list = [(population[0][1] + (i - 1)*(population[-1][1] - population[0][1])/(n - 1)) for i in range(n)]
+        # for _ in range(2):
+        #     r = random.uniform(rank_list[0], sum(rank_list))
+        #     for i, rank in enumerate(rank_list):
+        #         r -= rank
+        #         if r <= 0:
+        #             parents_list.append(population[i])
+        #         if len(parents_list) == 2 and parents_list[0] != parents_list[1]:
+        #             break
+        # return parents_list[0][0], parents_list[1][0]
 
     def crossover_operater(self, mom_cho, dad_cho):
         # 순서 교차
@@ -186,13 +186,13 @@ class GA_scheduling():
         # return offspring_cho
         
         # 부모에서 랜덤하게 선택
-        mom_ch = list(mom_cho)
-        dad_ch = list(dad_cho)
-        offspring_cho = []
-        for i in range(len(mom_ch)):
-            random_gene = random.choice([mom_ch[i], dad_ch[i]])
-            offspring_cho.append(random_gene)
-        return offspring_cho
+        # mom_ch = list(mom_cho)
+        # dad_ch = list(dad_cho)
+        # offspring_cho = []
+        # for i in range(len(mom_ch)):
+        #     random_gene = random.choice([mom_ch[i], dad_ch[i]])
+        #     offspring_cho.append(random_gene)
+        # return offspring_cho
 
         # 부모에서 교차하여 선택
         # mom_ch = list(mom_cho)
@@ -206,17 +206,17 @@ class GA_scheduling():
         # return offspring_cho
     
         # 부모의 가중 평균으로 자식 선택
-        # mom_ch = list(mom_cho)
-        # dad_ch = list(dad_cho)
-        # offspring_cho = []
-        # weight = 0.6
-        # for i in range(len(mom_ch)):
-        #     if i % 2 == 0:
-        #         weighted_avg_gene = weight * mom_ch[i] + (1-weight) * dad_ch[i]
-        #     else:
-        #         weighted_avg_gene = (1-weight) * mom_ch[i] + weight * dad_ch[i]
-        #     offspring_cho.append(weighted_avg_gene)
-        # return offspring_cho
+        mom_ch = list(mom_cho)
+        dad_ch = list(dad_cho)
+        offspring_cho = []
+        weight = 0.6
+        for i in range(len(mom_ch)):
+            if i % 2 == 0:
+                weighted_avg_gene = weight * mom_ch[i] + (1-weight) * dad_ch[i]
+            else:
+                weighted_avg_gene = (1-weight) * mom_ch[i] + weight * dad_ch[i]
+            offspring_cho.append(weighted_avg_gene)
+        return offspring_cho
 
         # 일점 교차
         # offspring_cho = []
@@ -229,8 +229,15 @@ class GA_scheduling():
 
     def mutation_operater(self, chromosome):
         # exchange mutation
-        ex_mu1, ex_mu2 = sorted(random.sample(range(self.params['num_job']), 2)) 
+        # ex_mu1, ex_mu2 = sorted(random.sample(range(self.params['num_job']), 2)) 
+        # chromosome[ex_mu1],chromosome[ex_mu2] = chromosome[ex_mu2], chromosome[ex_mu1]
+        # return chromosome
+
+        # 2 exchange mutation
+        ex_mu1, ex_mu2 = sorted(random.sample(range(self.params['num_job']), 2))
         chromosome[ex_mu1],chromosome[ex_mu2] = chromosome[ex_mu2], chromosome[ex_mu1]
+        ex_mu3, ex_mu4 = sorted(random.sample(range(self.params['num_job']), 2)) 
+        chromosome[ex_mu3],chromosome[ex_mu4] = chromosome[ex_mu4], chromosome[ex_mu3]
         return chromosome
 
         # scramble mutation
@@ -318,20 +325,20 @@ class GA_scheduling():
             sec = end - start
             time_list.append(sec)
             # 10분 지나면 종료
-            if  sec + time_list[0] >= 600:
-                #print("탐색이 완료되었습니다. \t 최종 세대수: {},\t 최종 해: {},\t 최종 적합도: {}".format(generation, population[0][0], population[0][1]))
-                result = population[0][0][:]
-                sorted_list = sorted(result)  
-                for i in range(len(result)):
-                    index = result.index(sorted_list[i])  
-                    result[index] = i + 1  
-                dup = {x for x in result if result.count(x) > 1}
-                if dup:
-                    print('중복 생김', dup)
-                print("탐색이 완료되었습니다. \t 최종 세대수: {},\t 최종 해: {},\t 최종 적합도: {}".format(generation, result, population[0][1]))
-                result_time = datetime.timedelta(seconds=(sec))
-                print('소요 시간 :', result_time)
-                break
+            # if  sec + time_list[0] >= 600:
+            #     #print("탐색이 완료되었습니다. \t 최종 세대수: {},\t 최종 해: {},\t 최종 적합도: {}".format(generation, population[0][0], population[0][1]))
+            #     result = population[0][0][:]
+            #     sorted_list = sorted(result)  
+            #     for i in range(len(result)):
+            #         index = result.index(sorted_list[i])  
+            #         result[index] = i + 1  
+            #     dup = {x for x in result if result.count(x) > 1}
+            #     if dup:
+            #         print('중복 생김', dup)
+            #     print("탐색이 완료되었습니다. \t 최종 세대수: {},\t 최종 해: {},\t 최종 적합도: {}".format(generation, result, population[0][1]))
+            #     result_time = datetime.timedelta(seconds=(sec))
+            #     print('소요 시간 :', result_time)
+            #     break
             # END비율만큼 수렴하면 출력
             # same = 0
             # for i in range(self.params["POP_SIZE"]):
