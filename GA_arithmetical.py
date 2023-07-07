@@ -10,7 +10,7 @@ import datetime
 objective_list = ['total_flowtime', 'makespan', 'tardy_job', 'total_tardiness', 'total_weighted_tardiness']
 
 params = {
-    'MUT': 0.2,  # 변이확률
+    'MUT': 0.5,  # 변이확률
     'END' : 0.95,  # 설정한 비율만큼 sequence가 수렴하면 탐색을 멈추게 하는 파라미터
     'POP_SIZE' : 100,  # population size 10 ~ 100
     'NUM_OFFSPRING' : 15, # 한 세대에 발생하는 자식 chromosome의 수
@@ -37,10 +37,11 @@ class GA_scheduling():
 
         result = sequence[:]
         sorted_list = sorted(result)  # 작은 값부터 정렬된 새로운 리스트를 생성합니다.
+
         for i in range(len(result)):
             index = result.index(sorted_list[i])  # 현재 작은 값의 인덱스를 찾습니다.
             result[index] = i + 1  # 1부터 100까지의 값을 할당합니다.
-        
+
         dup = {x for x in result if result.count(x) > 1}
         if dup:
             print('중복 생김', dup)
@@ -134,9 +135,12 @@ class GA_scheduling():
         #     offspring_cho.extend(mom_ch[k1:k2])
         #     offspring_cho.extend([x for x in dad_ch[k2:] + dad_ch[:k2] if x not in mom_ch[k1:k2]])
         # else:
+        #     print(k1, k2)
+        #     print(mom_ch, dad_ch)
         #     offspring_cho.extend([x for x in dad_ch[k2:] + dad_ch[:k2] if x not in mom_ch[k1:k2]][:k1])
         #     offspring_cho.extend(mom_ch[k1:k2])
         #     offspring_cho.extend([x for x in dad_ch[k2:] + dad_ch[:k2] if x not in offspring_cho])
+        #     print(len(offspring_cho))
         # return offspring_cho
     
         # PMX 교차
@@ -176,6 +180,15 @@ class GA_scheduling():
         #     index += 1
         # return offspring_cho
 
+        # 일점 교차
+        # offspring_cho = []
+        # mom_ch = list(mom_cho)
+        # dad_ch = list(dad_cho)
+        # k = random.randint(0, len(mom_ch))
+        # offspring_cho.extend(mom_ch[:k])
+        # offspring_cho.extend(dad_ch[k:])
+        # return offspring_cho
+
         # 평균값 연산
         # mom_ch = list(mom_cho)
         # dad_ch = list(dad_cho)
@@ -185,26 +198,6 @@ class GA_scheduling():
         #     offspring_cho.append(avg_gene)
         # return offspring_cho
         
-        # 부모에서 랜덤하게 선택
-        # mom_ch = list(mom_cho)
-        # dad_ch = list(dad_cho)
-        # offspring_cho = []
-        # for i in range(len(mom_ch)):
-        #     random_gene = random.choice([mom_ch[i], dad_ch[i]])
-        #     offspring_cho.append(random_gene)
-        # return offspring_cho
-
-        # 부모에서 교차하여 선택
-        # mom_ch = list(mom_cho)
-        # dad_ch = list(dad_cho)
-        # offspring_cho = []
-        # for i in range(len(mom_ch)):
-        #     if i % 2 == 0:
-        #         offspring_cho.append(mom_ch[i])
-        #     else:
-        #         offspring_cho.append(dad_ch[i])
-        # return offspring_cho
-    
         # 부모의 가중 평균으로 자식 선택
         mom_ch = list(mom_cho)
         dad_ch = list(dad_cho)
@@ -217,14 +210,25 @@ class GA_scheduling():
                 weighted_avg_gene = (1-weight) * mom_ch[i] + weight * dad_ch[i]
             offspring_cho.append(weighted_avg_gene)
         return offspring_cho
-
-        # 일점 교차
-        # offspring_cho = []
+    
+        # 부모에서 교차하여 선택
         # mom_ch = list(mom_cho)
         # dad_ch = list(dad_cho)
-        # k = random.randint(0, len(mom_ch))
-        # offspring_cho.extend(mom_ch[:k])
-        # offspring_cho.extend(dad_ch[k:])
+        # offspring_cho = []
+        # for i in range(len(mom_ch)):
+        #     if i % 2 == 0:
+        #         offspring_cho.append(mom_ch[i])
+        #     else:
+        #         offspring_cho.append(dad_ch[i])
+        # return offspring_cho
+
+        # 부모에서 랜덤하게 선택
+        # mom_ch = list(mom_cho)
+        # dad_ch = list(dad_cho)
+        # offspring_cho = []
+        # for i in range(len(mom_ch)):
+        #     random_gene = random.choice([mom_ch[i], dad_ch[i]])
+        #     offspring_cho.append(random_gene)
         # return offspring_cho
 
     def mutation_operater(self, chromosome):
@@ -233,13 +237,6 @@ class GA_scheduling():
         # chromosome[ex_mu1],chromosome[ex_mu2] = chromosome[ex_mu2], chromosome[ex_mu1]
         # return chromosome
 
-        # 2 exchange mutation
-        ex_mu1, ex_mu2 = sorted(random.sample(range(self.params['num_job']), 2))
-        chromosome[ex_mu1],chromosome[ex_mu2] = chromosome[ex_mu2], chromosome[ex_mu1]
-        ex_mu3, ex_mu4 = sorted(random.sample(range(self.params['num_job']), 2)) 
-        chromosome[ex_mu3],chromosome[ex_mu4] = chromosome[ex_mu4], chromosome[ex_mu3]
-        return chromosome
-
         # scramble mutation
         # sc_mu1, sc_mu2 = sorted(random.sample(range(self.params['num_job']), 2))
         # scramble_list = chromosome[sc_mu1:sc_mu2]
@@ -247,6 +244,13 @@ class GA_scheduling():
         # chromosome[sc_mu1:sc_mu2] = scramble_list
         # return chromosome
 
+        # 2 exchange mutation
+        # ex_mu1, ex_mu2 = sorted(random.sample(range(self.params['num_job']), 2))
+        # chromosome[ex_mu1],chromosome[ex_mu2] = chromosome[ex_mu2], chromosome[ex_mu1]
+        # ex_mu3, ex_mu4 = sorted(random.sample(range(self.params['num_job']), 2)) 
+        # chromosome[ex_mu3],chromosome[ex_mu4] = chromosome[ex_mu4], chromosome[ex_mu3]
+        # return chromosome
+    
         # 랜덤 갯수 랜덤 변경
         # random_select = random.randrange(5,30) # 변경할 갯수 정하기
         # select = random.sample(range(self.params['num_job']), random_select)
@@ -255,15 +259,14 @@ class GA_scheduling():
         # return chromosome
         
         # 한 번 섞기
-        # random.shuffle(chromosome)
-        # return chromosome
+        random.shuffle(chromosome)
+        return chromosome
 
         # 확률적으로 변경
-        # mutation_rate = 0.2
+        # mutation_rate = 0.5
         # for i in range(len(chromosome)):
         #     if random.uniform(0,1) < mutation_rate:
-        #         new_value = random.uniform(0,1)
-        #         chromosome[i] = new_value
+        #         chromosome[i] = random.uniform(0,1)
         # return chromosome
 
     def replacement_operator(self, population, offsprings):
@@ -285,6 +288,7 @@ class GA_scheduling():
         population = [] # 해집단
         offsprings = [] # 자식해집단
         average = []
+        a = True
 
         # 1. 초기화: 랜덤하게 해를 초기화
         for i in range(self.params["POP_SIZE"]):
@@ -325,31 +329,32 @@ class GA_scheduling():
             sec = end - start
             time_list.append(sec)
             # 10분 지나면 종료
-            # if  sec + time_list[0] >= 600:
-            #     #print("탐색이 완료되었습니다. \t 최종 세대수: {},\t 최종 해: {},\t 최종 적합도: {}".format(generation, population[0][0], population[0][1]))
-            #     result = population[0][0][:]
-            #     sorted_list = sorted(result)  
-            #     for i in range(len(result)):
-            #         index = result.index(sorted_list[i])  
-            #         result[index] = i + 1  
-            #     dup = {x for x in result if result.count(x) > 1}
-            #     if dup:
-            #         print('중복 생김', dup)
-            #     print("탐색이 완료되었습니다. \t 최종 세대수: {},\t 최종 해: {},\t 최종 적합도: {}".format(generation, result, population[0][1]))
-            #     result_time = datetime.timedelta(seconds=(sec))
-            #     print('소요 시간 :', result_time)
-            #     break
+            if  sec + time_list[0] >= 600:
+                #print("탐색이 완료되었습니다. \t 최종 세대수: {},\t 최종 해: {},\t 최종 적합도: {}".format(generation, population[0][0], population[0][1]))
+                result = population[0][0][:]
+                sorted_list = sorted(result)  
+                for i in range(len(result)):
+                    index = result.index(sorted_list[i])  
+                    result[index] = i + 1  
+                dup = {x for x in result if result.count(x) > 1}
+                if dup:
+                    print('중복 생김', dup)
+                print("탐색이 완료되었습니다. \t 최종 세대수: {},\t 최종 해: {},\t 최종 적합도: {}".format(generation, result, population[0][1]))
+                result_time = datetime.timedelta(seconds=(sec))
+                print('같은 해 갯수 : ', same)
+                print('소요 시간 :', result_time)
+                break
             # END비율만큼 수렴하면 출력
-            # same = 0
-            # for i in range(self.params["POP_SIZE"]):
-            #     if population[0][1] == population[i][1]:
-            #         same += 1
-            # if same >= len(population) * self.params["END"] and a == True: 
-            #     print("탐색이 완료되었습니다. \t 최종 세대수: {},\t 최종 해: {},\t 최종 적합도: {}".format(generation, population[0][0], population[0][1]))
-            #     print('같은 해 갯수 : ', same)
-            #     result_time = datetime.timedelta(seconds=(sec))
-            #     print('소요 시간 :', result_time)
-            #     a = False
+            same = 0
+            for i in range(self.params["POP_SIZE"]):
+                if population[0][1] == population[i][1]:
+                    same += 1
+            if same >= len(population) * self.params["END"] and a == True: 
+                print("탐색이 완료되었습니다. \t 최종 세대수: {},\t 최종 해: {},\t 최종 적합도: {}".format(generation, population[0][0], population[0][1]))
+                print('같은 해 갯수 : ', same)
+                result_time = datetime.timedelta(seconds=(sec))
+                print('소요 시간 :', result_time)
+                a = False
                 #break
 
         plt.figure(figsize=(12,6))
