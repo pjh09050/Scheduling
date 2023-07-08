@@ -199,17 +199,17 @@ class GA_scheduling():
         # return offspring_cho
         
         # 부모의 가중 평균으로 자식 선택
-        mom_ch = list(mom_cho)
-        dad_ch = list(dad_cho)
-        offspring_cho = []
-        weight = 0.6
-        for i in range(len(mom_ch)):
-            if i % 2 == 0:
-                weighted_avg_gene = weight * mom_ch[i] + (1-weight) * dad_ch[i]
-            else:
-                weighted_avg_gene = (1-weight) * mom_ch[i] + weight * dad_ch[i]
-            offspring_cho.append(weighted_avg_gene)
-        return offspring_cho
+        # mom_ch = list(mom_cho)
+        # dad_ch = list(dad_cho)
+        # offspring_cho = []
+        # weight = 0.6
+        # for i in range(len(mom_ch)):
+        #     if i % 2 == 0:
+        #         weighted_avg_gene = weight * mom_ch[i] + (1-weight) * dad_ch[i]
+        #     else:
+        #         weighted_avg_gene = (1-weight) * mom_ch[i] + weight * dad_ch[i]
+        #     offspring_cho.append(weighted_avg_gene)
+        # return offspring_cho
     
         # 부모에서 교차하여 선택
         # mom_ch = list(mom_cho)
@@ -223,13 +223,13 @@ class GA_scheduling():
         # return offspring_cho
 
         # 부모에서 랜덤하게 선택
-        # mom_ch = list(mom_cho)
-        # dad_ch = list(dad_cho)
-        # offspring_cho = []
-        # for i in range(len(mom_ch)):
-        #     random_gene = random.choice([mom_ch[i], dad_ch[i]])
-        #     offspring_cho.append(random_gene)
-        # return offspring_cho
+        mom_ch = list(mom_cho)
+        dad_ch = list(dad_cho)
+        offspring_cho = []
+        for i in range(len(mom_ch)):
+            random_gene = random.choice([mom_ch[i], dad_ch[i]])
+            offspring_cho.append(random_gene)
+        return offspring_cho
 
     def mutation_operater(self, chromosome):
         # exchange mutation
@@ -259,15 +259,15 @@ class GA_scheduling():
         # return chromosome
         
         # 한 번 섞기
-        random.shuffle(chromosome)
-        return chromosome
+        # random.shuffle(chromosome)
+        # return chromosome
 
         # 확률적으로 변경
-        # mutation_rate = 0.5
-        # for i in range(len(chromosome)):
-        #     if random.uniform(0,1) < mutation_rate:
-        #         chromosome[i] = random.uniform(0,1)
-        # return chromosome
+        mutation_rate = 0.5
+        for i in range(len(chromosome)):
+            if random.uniform(0,1) < mutation_rate:
+                chromosome[i] = random.uniform(0,1)
+        return chromosome
 
     def replacement_operator(self, population, offsprings):
         result_population = []
