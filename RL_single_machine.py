@@ -18,8 +18,6 @@ class GA():
     def __init__(self):
         self.x = []
 
-
-
 # 리플레이 버퍼 클래스
 class ReplayBuffer():
     def __init__(self):
