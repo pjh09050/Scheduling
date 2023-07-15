@@ -115,6 +115,7 @@ class Single_machine():
 
         for i in sequence:
             if i == 0:
+                total_tardiness += 1000000
                 break
             job = self.df['job' + str(i)]
             flowtime += job['소요시간']
