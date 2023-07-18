@@ -9,7 +9,6 @@ import pandas as pd
 import warnings
 warnings.filterwarnings('ignore')
 
-objective_list = ['total_flowtime', 'makespan', 'tardy_job', 'total_tardiness', 'total_weighted_tardiness']
 learning_rate = 0.0005
 gamma = 1
 buffer_limit = 50000
@@ -167,7 +166,7 @@ def main():
     q_target.load_state_dict(q.state_dict())
     memory = ReplayBuffer()
 
-    print_interval = 1
+    print_interval = 20
     score = 0.0
     optimizer = optim.Adam(q.parameters(), lr=learning_rate)
 
@@ -195,7 +194,7 @@ def main():
 
         if n_epi%print_interval==0 and n_epi!=0:
             q_target.load_state_dict(q.state_dict()) # q네트워크의 파라미터를 q_target네트워크로 복사
-            print("n_episode : {}, score : {:.1f}, n_buffer : {}, eps : {:.1f}%".format(n_epi, score/print_interval, memory.size(), epsilon*100))
+            print("n_episode : {}, score : {:.1f}, n_buffer : {}, eps : {:.1f}%".format(n_epi, score, memory.size(), epsilon*100))
         score = 0.0
 
     s = env.reset()
