@@ -10,7 +10,7 @@ import warnings
 warnings.filterwarnings('ignore')
 
 learning_rate = 0.0005
-gamma = 0.99
+gamma = 0.95
 buffer_limit = 50000
 batch_size = 32
 num_episodes = 2000
@@ -40,9 +40,9 @@ class ReplayBuffer():
 class Qnet(nn.Module):
     def __init__(self):
         super(Qnet, self).__init__()
-        self.fc1 = nn.Linear(3, 128)
-        self.fc2 = nn.Linear(128, 128)
-        self.fc3 = nn.Linear(128, 3)
+        self.fc1 = nn.Linear(4, 64)
+        self.fc2 = nn.Linear(64, 32)
+        self.fc3 = nn.Linear(32, 4)
 
     def forward(self, x):
         x = torch.relu(self.fc1(x))
@@ -54,7 +54,7 @@ class Qnet(nn.Module):
         out = self.forward(obs)
         coin = random.random()
         if coin < epsilon:
-            return random.randint(0, 2)
+            return random.randint(0, 3)
         else:
             return out.argmax().item()
     
@@ -64,7 +64,7 @@ class Qnet(nn.Module):
     
 class Single_machine():
     def __init__(self, df):
-        self.x = [0, 0, 0]
+        self.x = [0, 0, 0, 0]
         self.stop = 0
         self.df = df
         self.jobs_info = {i: self.df['job' + str(i)] for i in range(1, 101)}
@@ -79,7 +79,7 @@ class Single_machine():
         reward = - self.get_fitness(self.act)[0]
         total_flowtime = self.get_fitness(self.act)[1]
         done = self.is_done()
-        self.x = [total_flowtime, self.stop, 100-self.stop]
+        self.x = [reward, total_flowtime, self.stop, 100-self.stop]
         return self.x, reward, done
 
     def dispatching_act(self, a):
@@ -87,8 +87,10 @@ class Single_machine():
             self.seq.sort(key=lambda x: self.jobs_info[x]['소요시간'])
         elif a == 1:  # EDD
             self.seq.sort(key=lambda x: self.jobs_info[x]['제출기한'])
-        else:  # MST
+        elif a == 2:  # MST
             self.seq.sort(key=lambda x: self.jobs_info[x]['제출기한'] - self.jobs_info[x]['소요시간'])
+        else:
+            self.seq.sort(key=lambda x: self.jobs_info[x]['제출기한'] + self.jobs_info[x]['소요시간'])
         chosen_job = self.seq.pop(0)
         return chosen_job
     
@@ -118,7 +120,7 @@ class Single_machine():
 
     def reset(self):
         self.stop = 0
-        self.x= [0, 0, 0] # [ 그때 state의 total_flowtime, 인덱스 위치, 남은 job 수 ]
+        self.x= [0, 0, 0, 0] # [ 그때 state의 total_flowtime, 인덱스 위치, 남은 job 수 ]
         self.act = []
         self.seq = [i for i in range(1, 101)]
         return self.x
@@ -165,7 +167,20 @@ def main():
             score += r
             if done:
                 break
-
+        # s = env.reset()
+        # s = np.array(s)
+        # done = False
+        # score = 0.0
+        # while not done:
+        #     a = q.select_action(torch.from_numpy(s).float())
+        #     s_prime, r, done = env.step(a)
+        #     s = np.array(s)
+        #     s_prime = np.array(s_prime)
+        #     s = s_prime
+        #     score += r
+        #     if done:
+        #         break
+        # print("n_episode : {}, score : {:.1f}".format(n_epi, score))
         if memory.size() > 2000:
             train(q, q_target, memory, optimizer)
 
@@ -182,11 +197,13 @@ def main():
         s_prime, r, done = env.step(a)
         s = np.array(s)
         s_prime = np.array(s_prime)
+        print(s, a, r)
         s = s_prime
         score += r
         if done:
             break
-        return score
+        #print("n_episode : {}, score : {:.1f}, n_buffer : {}%".format(n_epi, score))
+    return score
 
 if __name__ == '__main__':
     score = main()    
