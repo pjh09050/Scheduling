@@ -10,10 +10,10 @@ import warnings
 warnings.filterwarnings('ignore')
 
 learning_rate = 0.0005
-gamma = 1
+gamma = 0.99
 buffer_limit = 50000
 batch_size = 32
-num_episodes = 1000
+num_episodes = 2000
 
 class ReplayBuffer():
     def __init__(self):
@@ -87,28 +87,11 @@ class Single_machine():
             self.seq.sort(key=lambda x: self.jobs_info[x]['소요시간'])
         elif a == 1:  # EDD
             self.seq.sort(key=lambda x: self.jobs_info[x]['제출기한'])
-        else:  # slack time
+        else:  # MST
             self.seq.sort(key=lambda x: self.jobs_info[x]['제출기한'] - self.jobs_info[x]['소요시간'])
         chosen_job = self.seq.pop(0)
         return chosen_job
     
-    # def get_fitness(self,sequence):
-    #     flowtime = 0
-    #     total_flowtime = 0
-    #     tardiness = 0
-    #     total_tardiness = 0
-    #     tardy_job = 0
-    #     for i in sequence:
-    #         if i == 0:
-    #             break
-    #         job = self.df['job' + str(i)]
-    #         flowtime += job['소요시간']
-    #         total_flowtime += flowtime
-    #         tardiness = max(flowtime - job['제출기한'], 0)
-    #         total_tardiness += tardiness
-    #         tardy_job += 1 if tardiness > 0 else 0
-    #     return tardiness, total_flowtime
-
     def get_fitness(self, sequence):
         key = tuple(sequence)  # sequence 리스트를 튜플로 변환하여 키로 활용
         if key in self.memo:
@@ -165,7 +148,7 @@ def main():
     optimizer = optim.Adam(q.parameters(), lr=learning_rate)
 
     for n_epi in range(num_episodes):
-        epsilon = max(0.01, 0.08-0.03*(n_epi/200))
+        epsilon = max(0.01, 0.08-0.02*(n_epi/200))
         s = env.reset()
         s = np.array(s)
         done = False
@@ -203,10 +186,8 @@ def main():
         score += r
         if done:
             break
-    return score
+        return score
 
 if __name__ == '__main__':
     score = main()    
     print('Score', score)
-
-    
