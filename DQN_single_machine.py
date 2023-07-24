@@ -68,18 +68,16 @@ class Single_machine():
         self.stop = 0
         self.df = df
         self.jobs_info = {i: self.df['job' + str(i)] for i in range(1, 101)}
-        self.act = []
         self.seq = [i for i in range(1, 101)]
-        self.memo = {}
+        self.total_flowtime = 0
 
     def step(self, a):
         select_job = self.dispatching_act(a)
-        self.act.append(select_job)
         self.stop += 1
-        reward = - self.get_fitness(self.act)[0]
-        total_flowtime = self.get_fitness(self.act)[1]
+        tardiness = self.get_fitness(select_job)
+        reward = -tardiness
         done = self.is_done()
-        self.x = [reward, total_flowtime, self.stop, 100-self.stop]
+        self.x = [tardiness, self.total_flowtime, self.stop, 100 - self.stop]
         return self.x, reward, done
 
     def dispatching_act(self, a):
@@ -89,28 +87,16 @@ class Single_machine():
             self.seq.sort(key=lambda x: self.jobs_info[x]['제출기한'])
         elif a == 2:  # MST
             self.seq.sort(key=lambda x: self.jobs_info[x]['제출기한'] - self.jobs_info[x]['소요시간'])
-        else:
+        else: # SPT + EDD
             self.seq.sort(key=lambda x: self.jobs_info[x]['제출기한'] + self.jobs_info[x]['소요시간'])
         chosen_job = self.seq.pop(0)
         return chosen_job
-    
-    def get_fitness(self, sequence):
-        key = tuple(sequence)  # sequence 리스트를 튜플로 변환하여 키로 활용
-        if key in self.memo:
-            return self.memo[key]
-        flowtime = 0
-        total_flowtime = 0
-        tardiness = 0
-        for i in sequence:
-            if i == 0:
-                break
-            job = self.df['job' + str(i)]
-            flowtime += job['소요시간']
-            total_flowtime += flowtime
-            tardiness = max(flowtime - job['제출기한'], 0)
-        result = (tardiness, total_flowtime)
-        self.memo[key] = result
-        return result
+
+    def get_fitness(self, job):
+        flowtime = self.jobs_info[job]['소요시간']
+        self.total_flowtime += flowtime
+        tardiness = max(self.total_flowtime - self.jobs_info[job]['제출기한'], 0)
+        return tardiness
     
     def is_done(self):
         if self.stop == 100:
@@ -123,6 +109,8 @@ class Single_machine():
         self.x= [0, 0, 0, 0] # [ 그때 state의 total_flowtime, 인덱스 위치, 남은 job 수 ]
         self.act = []
         self.seq = [i for i in range(1, 101)]
+        self.total_flowtime = 0
+        self.act = []
         return self.x
     
 def train(q, q_target, memory, optimizer):
@@ -202,7 +190,6 @@ def main():
         score += r
         if done:
             break
-        #print("n_episode : {}, score : {:.1f}, n_buffer : {}%".format(n_epi, score))
     return score
 
 if __name__ == '__main__':
