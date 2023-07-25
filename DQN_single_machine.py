@@ -106,7 +106,7 @@ class Single_machine():
 
     def reset(self):
         self.stop = 0
-        self.x= [0, 0, 0, 0] # [ 그때 state의 total_flowtime, 인덱스 위치, 남은 job 수 ]
+        self.x= [0, 0, 0, 0]
         self.act = []
         self.seq = [i for i in range(1, 101)]
         self.total_flowtime = 0
@@ -155,25 +155,26 @@ def main():
             score += r
             if done:
                 break
-        # s = env.reset()
-        # s = np.array(s)
-        # done = False
-        # score = 0.0
-        # while not done:
-        #     a = q.select_action(torch.from_numpy(s).float())
-        #     s_prime, r, done = env.step(a)
-        #     s = np.array(s)
-        #     s_prime = np.array(s_prime)
-        #     s = s_prime
-        #     score += r
-        #     if done:
-        #         break
-        # print("n_episode : {}, score : {:.1f}".format(n_epi, score))
+        s = env.reset()
+        s = np.array(s)
+        done = False
+        score1 = 0.0
+        while not done:
+            a = q.select_action(torch.from_numpy(s).float())
+            s_prime, r, done = env.step(a)
+            s = np.array(s)
+            s_prime = np.array(s_prime)
+            s = s_prime
+            score1 += r
+            if done:
+                break
+
         if memory.size() > 2000:
             train(q, q_target, memory, optimizer)
 
         if n_epi%print_interval==0 and n_epi!=0:
             q_target.load_state_dict(q.state_dict())
+            print("n_episode : {}, score : {:.1f}".format(n_epi, score1))
             print("n_episode : {}, score : {:.1f}, n_buffer : {}, eps : {:.1f}%".format(n_epi, score, memory.size(), epsilon*100))
         
     s = env.reset()
