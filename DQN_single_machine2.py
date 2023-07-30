@@ -9,6 +9,17 @@ import pandas as pd
 import warnings
 warnings.filterwarnings('ignore')
 
+'''
+machine : 1개
+Job type : A, B, C
+Job number : 각 10개, 총 30개
+목적함수 : 가산점 + Throughput(생산 갯수) 최대화
+is_done : 100초
+processing time : A(10), B(20), C(30)
+초기 setup : C
+Setup 시간 : C->A:5, C->B:5, A->B:10, A->C:10, B->A:5, B->C:10
+가산점 : Throughput에 C가 3개 이상있으면 20점
+'''
 learning_rate = 0.0005
 gamma = 0.95
 buffer_limit = 50000
@@ -31,57 +42,89 @@ class ReplayBuffer():
             a_lst.append([a])
             r_lst.append([r]) 
             s_prime_lst.append(s_prime) # 스칼라 값이 아닌 벡터 값이 나올 수 있기 때문
-            done_mask_lst.append([done_mask]) 
+            done_mask_lst.append([done_mask])
         return torch.tensor(s_lst, dtype=torch.float), torch.tensor(a_lst), torch.tensor(r_lst), torch.tensor(s_prime_lst, dtype=torch.float), torch.tensor(done_mask_lst)
     
     def size(self):
         return len(self.buffer)
 
 class Score_Single_machine():
-    def __init__(self, df):
-        self.x = [0, 0, 0, 0]
+    def __init__(self):
+        self.x = [0, 0, 0, 0, 0, 0, 0]
+        self.jobs = {'A': 10, 'B': 10, 'C': 10}
+        self.job_processing_time = {'A': 10, 'B': 20, 'C': 30}
+        self.all_setup_times = {
+            'C': {'A': 5, 'B': 5},
+            'A': {'B': 10, 'C': 10},
+            'B': {'A': 5, 'C': 10}
+        }
+        self.current_job_type = 'C' 
+        self.total_jobs = 30
+        self.select_job = []
         self.stop = 0
-        self.jobs_info = {i: self.df['job' + str(i)] for i in range(1, 101)}
-        self.seq = [i for i in range(1, 101)]
-        self.total_flowtime = 0
+        self.total_processing_time = 0
+        self.total_setup_time = 0
+        self.setup_changes = 0
+        self.final_score = 0
 
     def step(self, a):
-        select_job = self.dispatching_act(a)
-        self.stop += 1
-        tardiness = self.get_fitness(select_job)
-        reward = -tardiness
-        done = self.is_done()
-        self.x = [tardiness, self.total_flowtime, self.stop, 100 - self.stop]
-        return self.x, reward, done
+        a = 'A' if a == 0 else "B" if a == 1 else "C"
+        if a != self.current_job_type:
+            setup_time = self.change_setup(a)
+            self.total_setup_time += setup_time
+            self.setup_changes += 1
+        self.select_job.append(a)
 
-    def dispatching_act(self, a):
-        if a == 0:  # SPT
-            self.seq.sort(key=lambda x: self.jobs_info[x]['소요시간'])
-        elif a == 1:  # EDD
-            self.seq.sort(key=lambda x: self.jobs_info[x]['제출기한'])
-        elif a == 2:  # MST
-            self.seq.sort(key=lambda x: self.jobs_info[x]['제출기한'] - self.jobs_info[x]['소요시간'])
-        else: # SPT + EDD
-            self.seq.sort(key=lambda x: self.jobs_info[x]['제출기한'] + self.jobs_info[x]['소요시간'])
-        chosen_job = self.seq.pop(0)
-        return chosen_job
-    
+        # processing_time 계산
+        processing_time = self.job_processing_time[a]
+        self.total_processing_time += processing_time
+        self.stop += processing_time
+
+        # 가산점
+        C_num = 10 - self.jobs['C']
+        bonus_points = 20 if C_num >= 3 else 0
+        
+        reward = bonus_points
+        done = self.is_done()
+        if done == True:
+            # 생산 완료한 작업 갯수
+            number_of_jobs_produced = self.total_jobs - sum(self.jobs.values())
+            self.final_score = number_of_jobs_produced + bonus_points
+        else:
+            self.jobs[a] -= 1
+        self.x = [self.total_processing_time, sum(self.jobs.values()), C_num, self.total_setup_time, self.setup_changes, bonus_points, 100 - self.stop]
+        return self.x, reward, done, self.final_score
+        
+    def change_setup(self, a):
+        setup_time = self.all_setup_times[self.current_job_type][a]
+        self.stop += setup_time
+        self.current_job_type = a
+        return setup_time
+
     def is_done(self):
-        if self.stop == 100:
+        if self.stop >= 100:
             return True
-        else: 
+        else:
             return False
 
     def reset(self):
+        self.x = [0, 0, 0, 0, 0, 0, 0]
+        self.jobs = {'A': 10, 'B': 10, 'C': 10}
+        self.current_job_type = 'C'
+        self.select_job = []
         self.stop = 0
+        self.total_processing_time = 0
+        self.total_setup_time = 0
+        self.setup_changes = 0
+        self.final_score = 0
         return self.x
 
 class Qnet(nn.Module):
     def __init__(self):
         super(Qnet, self).__init__()
-        self.fc1 = nn.Linear(4, 64)
+        self.fc1 = nn.Linear(7, 64)
         self.fc2 = nn.Linear(64, 32)
-        self.fc3 = nn.Linear(32, 4)
+        self.fc3 = nn.Linear(32, 3)
 
     def forward(self, x):
         x = torch.relu(self.fc1(x))
@@ -93,7 +136,7 @@ class Qnet(nn.Module):
         out = self.forward(obs)
         coin = random.random()
         if coin < epsilon:
-            return random.randint(0, 3)
+            return random.randint(0,2)
         else:
             return out.argmax().item()
     
@@ -126,7 +169,7 @@ def main():
     optimizer = optim.Adam(q.parameters(), lr=learning_rate)
 
     for n_epi in range(num_episodes):
-        epsilon = max(0.01, 0.08-0.02*(n_epi/200))
+        epsilon = max(0.01, 0.1-0.01*(n_epi/200))
         s = env.reset()
         s = np.array(s)
         done = False
@@ -134,7 +177,7 @@ def main():
 
         while not done:
             a = q.sample_action(torch.from_numpy(s).float(), epsilon)
-            s_prime, r, done = env.step(a)
+            s_prime, r, done, final_score = env.step(a)
             s = np.array(s)
             s_prime = np.array(s_prime)
             done_mask = 0.0 if done else 1.0
@@ -144,13 +187,46 @@ def main():
             if done:
                 break
 
+        s = env.reset()
+        s = np.array(s)
+        done = False
+        score1 = 0.0
+        while not done:
+            a = q.select_action(torch.from_numpy(s).float())
+            s_prime, r, done, final_score1 = env.step(a)
+            s = np.array(s)
+            s_prime = np.array(s_prime)
+            s = s_prime
+            score1 += r
+            if done:
+                break
+
         if memory.size() > 2000:
             train(q, q_target, memory, optimizer)
 
         if n_epi%print_interval==0 and n_epi!=0:
             q_target.load_state_dict(q.state_dict())
-            print("n_episode : {}, score : {:.1f}, n_buffer : {}, eps : {:.1f}%".format(n_epi, score, memory.size(), epsilon*100))
-
+            print("n_episode : {}, score : {:.1f}, final_score : {}, n_buffer : {}, eps : {:.1f}%".format(n_epi, score, final_score, memory.size(), epsilon*100))
+            print("n_episode : {}, score : {:.1f}, final_score : {}".format(n_epi, score1, final_score1))
+        
+    s = env.reset()
+    s = np.array(s)
+    done = False
+    score = 0.0
+    act_set = []
+    while not done:
+        a = q.select_action(torch.from_numpy(s).float())
+        s_prime, r, done, final_score2 = env.step(a)
+        s = np.array(s)
+        s_prime = np.array(s_prime)
+        s = s_prime
+        a = 'A' if a == 0 else "B" if a == 1 else "C"
+        act_set.append(a)
+        score += r
+        if done:
+            break
+    return act_set, final_score2
 
 if __name__ == '__main__':
-    main()    
+    act_set, final_score2 = main()    
+    print('Action : {}, Score : {}'.format(act_set, final_score2))
