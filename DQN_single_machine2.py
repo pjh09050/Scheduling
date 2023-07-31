@@ -5,7 +5,6 @@ import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
 import numpy as np
-import pandas as pd
 import warnings
 warnings.filterwarnings('ignore')
 
@@ -21,8 +20,8 @@ Setup 시간 : C->A:5, C->B:5, A->B:10, A->C:10, B->A:5, B->C:10
 가산점 : Throughput에 C가 3개 이상있으면 20점
 '''
 learning_rate = 0.0005
-gamma = 0.95
-buffer_limit = 50000
+gamma = 1
+buffer_limit = 5000
 batch_size = 32
 num_episodes = 2000
 
@@ -37,7 +36,7 @@ class ReplayBuffer():
         mini_batch = random.sample(self.buffer, n)
         s_lst, a_lst, r_lst, s_prime_lst, done_mask_lst = [], [], [], [], []
         for transition in mini_batch:
-            s, a, r, s_prime, done_mask = transition # done_mask : 종료 상태의 밸류를 마스킹해주기 위해 만든 변수
+            s, a, r, s_prime, done_mask = transition
             s_lst.append(s) # 스칼라 값이 아닌 벡터 값이 나올 수 있기 때문
             a_lst.append([a])
             r_lst.append([r]) 
@@ -80,18 +79,18 @@ class Score_Single_machine():
         self.total_processing_time += processing_time
         self.stop += processing_time
 
+        done = self.is_done()
         # 가산점
         C_num = 10 - self.jobs['C']
         bonus_points = 20 if C_num >= 3 else 0
-        
         reward = bonus_points
-        done = self.is_done()
         if done == True:
             # 생산 완료한 작업 갯수
             number_of_jobs_produced = self.total_jobs - sum(self.jobs.values())
             self.final_score = number_of_jobs_produced + bonus_points
         else:
             self.jobs[a] -= 1
+
         self.x = [self.total_processing_time, sum(self.jobs.values()), C_num, self.total_setup_time, self.setup_changes, bonus_points, 100 - self.stop]
         return self.x, reward, done, self.final_score
         
@@ -169,7 +168,7 @@ def main():
     optimizer = optim.Adam(q.parameters(), lr=learning_rate)
 
     for n_epi in range(num_episodes):
-        epsilon = max(0.01, 0.1-0.01*(n_epi/200))
+        epsilon = max(0.01, 0.06-0.01*(n_epi/200))
         s = env.reset()
         s = np.array(s)
         done = False
@@ -201,7 +200,7 @@ def main():
             if done:
                 break
 
-        if memory.size() > 2000:
+        if memory.size() > 500:
             train(q, q_target, memory, optimizer)
 
         if n_epi%print_interval==0 and n_epi!=0:

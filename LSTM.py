@@ -4,7 +4,6 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 # many to one using LSTM
-
 class SimpleLSTM(nn.Module):
     def __init__(self):
         super(SimpleLSTM, self).__init__()
