@@ -13,15 +13,15 @@ machine : 1개
 Job type : A, B, C
 Job number : 각 10개, 총 30개
 목적함수 : 가산점 + Throughput(생산 갯수) 최대화
-is_done : 100초
+is_done : 110초
 processing time : A(10), B(20), C(30)
 초기 setup : C
 Setup 시간 : C->A:5, C->B:5, A->B:10, A->C:10, B->A:5, B->C:10
 가산점 : Throughput에 C가 3개 이상있으면 20점
 '''
-learning_rate = 0.0005
+learning_rate = 0.0001
 gamma = 1
-buffer_limit = 5000
+buffer_limit = 10000
 batch_size = 32
 num_episodes = 2000
 
@@ -83,10 +83,11 @@ class Score_Single_machine():
         # 가산점
         C_num = 10 - self.jobs['C']
         bonus_points = 20 if C_num >= 3 else 0
-        reward = bonus_points
+        number_of_jobs_produced = self.total_jobs - sum(self.jobs.values())
+        reward = bonus_points + number_of_jobs_produced
         if done == True:
             # 생산 완료한 작업 갯수
-            number_of_jobs_produced = self.total_jobs - sum(self.jobs.values())
+            # number_of_jobs_produced = self.total_jobs - sum(self.jobs.values())
             self.final_score = number_of_jobs_produced + bonus_points
         else:
             self.jobs[a] -= 1
@@ -101,7 +102,7 @@ class Score_Single_machine():
         return setup_time
 
     def is_done(self):
-        if self.stop >= 100:
+        if self.stop >= 110:
             return True
         else:
             return False
@@ -121,9 +122,9 @@ class Score_Single_machine():
 class Qnet(nn.Module):
     def __init__(self):
         super(Qnet, self).__init__()
-        self.fc1 = nn.Linear(7, 64)
-        self.fc2 = nn.Linear(64, 32)
-        self.fc3 = nn.Linear(32, 3)
+        self.fc1 = nn.Linear(7, 128)
+        self.fc2 = nn.Linear(128, 128)
+        self.fc3 = nn.Linear(128, 3)
 
     def forward(self, x):
         x = torch.relu(self.fc1(x))
@@ -164,7 +165,6 @@ def main():
     memory = ReplayBuffer()
 
     print_interval = 20
-    score = 0.0
     optimizer = optim.Adam(q.parameters(), lr=learning_rate)
 
     for n_epi in range(num_episodes):
@@ -172,7 +172,6 @@ def main():
         s = env.reset()
         s = np.array(s)
         done = False
-        score = 0.0
 
         while not done:
             a = q.sample_action(torch.from_numpy(s).float(), epsilon)
@@ -182,7 +181,6 @@ def main():
             done_mask = 0.0 if done else 1.0
             memory.put((s, a, r, s_prime, done_mask))
             s = s_prime
-            score += r
             if done:
                 break
 
@@ -196,7 +194,6 @@ def main():
             s = np.array(s)
             s_prime = np.array(s_prime)
             s = s_prime
-            score1 += r
             if done:
                 break
 
@@ -205,8 +202,8 @@ def main():
 
         if n_epi%print_interval==0 and n_epi!=0:
             q_target.load_state_dict(q.state_dict())
-            print("n_episode : {}, score : {:.1f}, final_score : {}, n_buffer : {}, eps : {:.1f}%".format(n_epi, score, final_score, memory.size(), epsilon*100))
-            print("n_episode : {}, score : {:.1f}, final_score : {}".format(n_epi, score1, final_score1))
+            print("n_episode : {}, final_score : {}, n_buffer : {}, eps : {:.1f}%".format(n_epi, final_score, memory.size(), epsilon*100))
+            print("n_episode : {}, final_score : {}".format(n_epi, final_score1))
         
     s = env.reset()
     s = np.array(s)
@@ -221,7 +218,6 @@ def main():
         s = s_prime
         a = 'A' if a == 0 else "B" if a == 1 else "C"
         act_set.append(a)
-        score += r
         if done:
             break
     return act_set, final_score2
