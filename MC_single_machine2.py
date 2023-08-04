@@ -25,28 +25,6 @@ buffer_limit = 50000
 batch_size = 32
 num_episodes = 3000
 
-class ReplayBuffer():
-    def __init__(self):
-        self.buffer = collections.deque(maxlen=buffer_limit)
-
-    def put(self, transition):
-        self.buffer.append(transition)
-
-    def sample(self, n):
-        mini_batch = random.sample(self.buffer, n)
-        s_lst, a_lst, r_lst, s_prime_lst, done_mask_lst = [], [], [], [], []
-        for transition in mini_batch:
-            s, a, r, s_prime, done_mask = transition
-            s_lst.append(s) # 스칼라 값이 아닌 벡터 값이 나올 수 있기 때문
-            a_lst.append([a])
-            r_lst.append([r]) 
-            s_prime_lst.append(s_prime) # 스칼라 값이 아닌 벡터 값이 나올 수 있기 때문
-            done_mask_lst.append([done_mask])
-        return torch.tensor(s_lst, dtype=torch.float), torch.tensor(a_lst), torch.tensor(r_lst), torch.tensor(s_prime_lst, dtype=torch.float), torch.tensor(done_mask_lst)
-    
-    def size(self):
-        return len(self.buffer)
-
 class Score_Single_machine():
     def __init__(self):
         self.x = [0, 0, 0, 0, 0, 0]
@@ -57,7 +35,7 @@ class Score_Single_machine():
             'A': {'B': 10, 'C': 10},
             'B': {'A': 5, 'C': 10}
         }
-        self.current_job_type = 'C' 
+        self.current_job_type = 'C'
         self.total_jobs = 30
         self.select_job = []
         self.stop = 0
@@ -145,8 +123,8 @@ class MCnet(nn.Module):
 def main():
     env = Score_Single_machine()
     MC_net = MCnet()
-    optimizer = optim.Adam(MC_net.parameters(), lr=learning_rate)
 
+    optimizer = optim.Adam(MC_net.parameters(), lr=learning_rate)
     print_interval = 20
 
     for n_epi in range(num_episodes):
@@ -156,7 +134,6 @@ def main():
         done = False
 
         episode = []  # 에피소드 내에서 (상태, 액션, 보상)을 저장하기 위한 리스트
-
         while not done:
             a = MC_net.sample_action(s, epsilon)  # 정책 네트워크에서 액션 샘플링
             s_prime, r, done, final_score = env.step(a)
@@ -165,7 +142,6 @@ def main():
             s = s_prime
             if done:
                 break
-
         G = 0
         for t in range(len(episode) - 1, -1, -1):
             s, a, r = episode[t]
