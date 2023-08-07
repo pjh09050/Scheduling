@@ -20,7 +20,7 @@ Setup 시간 : C->A:5, C->B:5, A->B:10, A->C:10, B->A:5, B->C:10
 가산점 : Throughput에 C가 3개 이상있으면 20점
 '''
 learning_rate = 0.001
-gamma = 1
+gamma = 0.99
 buffer_limit = 50000
 batch_size = 32
 num_episodes = 3000
@@ -62,13 +62,13 @@ class Score_Single_machine():
         C_num = 10 - self.jobs['C']
         bonus_points = 20 if C_num >= 3 else 0
         number_of_jobs_produced = self.total_jobs - sum(self.jobs.values())
-        reward = bonus_points + 1
+        reward = bonus_points + number_of_jobs_produced
         if done == True:
             self.final_score = number_of_jobs_produced + bonus_points
         else:
             self.jobs[a] -= 1
 
-        self.x = [C_num, bonus_points, sum(self.jobs.values()), self.total_setup_time, self.setup_changes, 100 - self.stop]
+        self.x = [bonus_points, C_num, sum(self.jobs.values()), self.total_setup_time, self.setup_changes, 100 - self.stop]
         return self.x, reward, done, self.final_score
         
     def change_setup(self, a):
