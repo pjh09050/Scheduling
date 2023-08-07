@@ -19,7 +19,7 @@ processing time : A(10), B(20), C(30)
 Setup 시간 : C->A:5, C->B:5, A->B:10, A->C:10, B->A:5, B->C:10
 가산점 : Throughput에 C가 3개 이상있으면 20점
 '''
-learning_rate = 0.0005
+learning_rate = 0.001
 gamma = 0.99
 buffer_limit = 50000
 batch_size = 32
@@ -84,13 +84,13 @@ class Score_Single_machine():
         C_num = 10 - self.jobs['C']
         bonus_points = 20 if C_num >= 3 else 0
         number_of_jobs_produced = self.total_jobs - sum(self.jobs.values())
-        reward = bonus_points + 1
+        reward = bonus_points + number_of_jobs_produced
         if done == True:
             self.final_score = number_of_jobs_produced + bonus_points
         else:
             self.jobs[a] -= 1
 
-        self.x = [C_num, bonus_points, sum(self.jobs.values()), self.total_setup_time, self.setup_changes, 100 - self.stop]
+        self.x = [bonus_points, C_num, sum(self.jobs.values()), self.total_setup_time, self.setup_changes, 100 - self.stop]
         return self.x, reward, done, self.final_score
         
     def change_setup(self, a):
@@ -121,8 +121,8 @@ class Qnet(nn.Module):
     def __init__(self):
         super(Qnet, self).__init__()
         self.fc1 = nn.Linear(6, 128)
-        self.fc2 = nn.Linear(128, 64)
-        self.fc3 = nn.Linear(64, 3)
+        self.fc2 = nn.Linear(128, 128)
+        self.fc3 = nn.Linear(128, 3)
 
     def forward(self, x):
         x = torch.relu(self.fc1(x))
@@ -166,7 +166,7 @@ def main():
     optimizer = optim.Adam(q.parameters(), lr=learning_rate)
 
     for n_epi in range(num_episodes):
-        epsilon = max(0.01, 0.08-0.01*(n_epi/200))
+        epsilon = max(0.01, 0.2-0.02*(n_epi/200))
         s = env.reset()
         s = np.array(s)
         done = False
