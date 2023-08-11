@@ -21,7 +21,7 @@ Setup 시간 : C->A:5, C->B:5, A->B:10, A->C:10, B->A:5, B->C:10
 '''
 learning_rate = 0.001
 gamma = 0.99
-buffer_limit = 50000
+buffer_limit = 10000
 batch_size = 32
 num_episodes = 3000
 
@@ -166,7 +166,7 @@ def main():
     optimizer = optim.Adam(q.parameters(), lr=learning_rate)
 
     for n_epi in range(num_episodes):
-        epsilon = max(0.01, 0.2-0.02*(n_epi/200))
+        epsilon = max(0.01, 0.3-0.03*(n_epi/200))
         s = env.reset()
         s = np.array(s)
         done = False

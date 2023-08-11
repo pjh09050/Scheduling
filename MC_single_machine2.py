@@ -8,22 +8,9 @@ import numpy as np
 import warnings
 warnings.filterwarnings('ignore')
 
-'''
-machine : 1개
-Job type : A, B, C
-Job number : 각 10개, 총 30개
-목적함수 : 가산점 + Throughput(생산 갯수) 최대화
-is_done : 110초
-processing time : A(10), B(20), C(30)
-초기 setup : C
-Setup 시간 : C->A:5, C->B:5, A->B:10, A->C:10, B->A:5, B->C:10
-가산점 : Throughput에 C가 3개 이상있으면 20점
-'''
 learning_rate = 0.001
-gamma = 0.99
-buffer_limit = 50000
-batch_size = 32
-num_episodes = 3000
+gamma = 1
+num_episodes = 2500
 
 class Score_Single_machine():
     def __init__(self):
@@ -62,7 +49,7 @@ class Score_Single_machine():
         C_num = 10 - self.jobs['C']
         bonus_points = 20 if C_num >= 3 else 0
         number_of_jobs_produced = self.total_jobs - sum(self.jobs.values())
-        reward = bonus_points + number_of_jobs_produced
+        reward = 1 + bonus_points
         if done == True:
             self.final_score = number_of_jobs_produced + bonus_points
         else:
@@ -95,9 +82,9 @@ class Score_Single_machine():
         self.final_score = 0
         return self.x
 
-class MCnet(nn.Module):
+class MC_Qnet(nn.Module):
     def __init__(self):
-        super(MCnet, self).__init__()
+        super(MC_Qnet, self).__init__()
         self.fc1 = nn.Linear(6, 128)
         self.fc2 = nn.Linear(128, 64)
         self.fc3 = nn.Linear(64, 3)
@@ -107,7 +94,7 @@ class MCnet(nn.Module):
         x = torch.relu(self.fc2(x))
         x = self.fc3(x)
         return x
-
+    
     def sample_action(self, obs, epsilon):
         out = self.forward(obs)
         coin = random.random()
@@ -115,54 +102,64 @@ class MCnet(nn.Module):
             return random.randint(0,2)
         else:
             return out.argmax().item()
-        
+    
     def select_action(self, obs):
         out = self.forward(obs)
         return out.argmax().item()
+    
+def train(q, optimizer, history, gamma):
+    for t in range(len(history)):
+        s, a, r, s_prime, done = history[t]
+        G = r  
+        for k in range(t+1, len(history)):
+            G += gamma * history[k][2] # gamma * reward
+        q_value = q(s)[a]
+        loss = F.smooth_l1_loss(q_value, torch.tensor(G))
+        optimizer.zero_grad()
+        loss.backward()
+        optimizer.step() 
 
 def main():
     env = Score_Single_machine()
-    MC_net = MCnet()
+    q = MC_Qnet()
+    q_target = MC_Qnet()
+    q_target.load_state_dict(q.state_dict()) 
 
-    optimizer = optim.Adam(MC_net.parameters(), lr=learning_rate)
     print_interval = 20
+    optimizer = optim.Adam(q.parameters(), lr=learning_rate)
 
     for n_epi in range(num_episodes):
-        epsilon = max(0.01, 0.08-0.01*(n_epi/200))
+        epsilon = max(0.01, 0.3-0.03*(n_epi/200))
         s = env.reset()
-        s = torch.from_numpy(np.array(s)).float()  # NumPy array를 Tensor로 변환
+        s = torch.from_numpy(np.array(s)).float()
         done = False
+        history = []
 
-        episode = []  # 에피소드 내에서 (상태, 액션, 보상)을 저장하기 위한 리스트
         while not done:
-            a = MC_net.sample_action(s, epsilon)  # 정책 네트워크에서 액션 샘플링
-            s_prime, r, done, final_score = env.step(a)
+            a = q.sample_action(s.float(), epsilon)
+            s_prime, r, done, final_score= env.step(a)
             s_prime = torch.from_numpy(np.array(s_prime)).float()
-            episode.append((s, a, r))
+            history.append((s, a, r, s_prime, done))
             s = s_prime
             if done:
                 break
-        G = 0
-        for t in range(len(episode) - 1, -1, -1):
-            s, a, r = episode[t]
-            G = gamma * G + r
-            optimizer.zero_grad()
-            log_prob = torch.log(MC_net(s)[a])  # 선택된 액션의 로그 확률
-            loss = -log_prob * G
-            loss.backward()
-            optimizer.step()
+
+        train(q, optimizer, history, gamma) 
 
         if n_epi % print_interval == 0 and n_epi != 0:
-            print("n_episode : {}, final_score : {}".format(n_epi, final_score))
-
+            q_target.load_state_dict(q.state_dict())
+            print("n_episode : {}, final_score : {}, eps : {:.1f}%".format(n_epi, final_score, epsilon*100))
+            
     s = env.reset()
-    s = torch.from_numpy(np.array(s)).float() 
+    s = torch.from_numpy(np.array(s)).float()
     done = False
     act_set = []
+    history = []
     while not done:
-        a = MC_net.select_action(s)
-        s_prime, r, done, final_score2 = env.step(a)
+        a = q.select_action(s.float())
+        s_prime, r, done, final_score2= env.step(a)
         s_prime = torch.from_numpy(np.array(s_prime)).float()
+        history.append((s, a, r, s_prime, done))
         s = s_prime
         a = 'A' if a == 0 else "B" if a == 1 else "C"
         act_set.append(a)
