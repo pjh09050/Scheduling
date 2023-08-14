@@ -9,7 +9,7 @@ import warnings
 warnings.filterwarnings('ignore')
 
 learning_rate = 0.001
-gamma = 1
+gamma = 0.99
 num_episodes = 2500
 
 class Score_Single_machine():
@@ -45,7 +45,6 @@ class Score_Single_machine():
         self.stop += processing_time
 
         done = self.is_done()
-        # 가산점
         C_num = 10 - self.jobs['C']
         bonus_points = 20 if C_num >= 3 else 0
         number_of_jobs_produced = self.total_jobs - sum(self.jobs.values())

@@ -21,9 +21,9 @@ Setup 시간 : C->A:5, C->B:5, A->B:10, A->C:10, B->A:5, B->C:10
 '''
 learning_rate = 0.001
 gamma = 0.99
-buffer_limit = 10000
+buffer_limit = 20000
 batch_size = 32
-num_episodes = 3000
+num_episodes = 2500
 
 class ReplayBuffer():
     def __init__(self):
@@ -84,7 +84,7 @@ class Score_Single_machine():
         C_num = 10 - self.jobs['C']
         bonus_points = 20 if C_num >= 3 else 0
         number_of_jobs_produced = self.total_jobs - sum(self.jobs.values())
-        reward = bonus_points + number_of_jobs_produced
+        reward = bonus_points + 1
         if done == True:
             self.final_score = number_of_jobs_produced + bonus_points
         else:
@@ -121,8 +121,8 @@ class Qnet(nn.Module):
     def __init__(self):
         super(Qnet, self).__init__()
         self.fc1 = nn.Linear(6, 128)
-        self.fc2 = nn.Linear(128, 128)
-        self.fc3 = nn.Linear(128, 3)
+        self.fc2 = nn.Linear(128, 64)
+        self.fc3 = nn.Linear(64, 3)
 
     def forward(self, x):
         x = torch.relu(self.fc1(x))
