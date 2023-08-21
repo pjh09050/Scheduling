@@ -105,7 +105,7 @@ class MC_Qnet(nn.Module):
     def select_action(self, obs):
         out = self.forward(obs)
         return out.argmax().item()
-    
+
 def train(q, optimizer, history, gamma):
     for t in range(len(history)):
         s, a, r, s_prime, done = history[t]
@@ -128,7 +128,7 @@ def main():
     optimizer = optim.Adam(q.parameters(), lr=learning_rate)
 
     for n_epi in range(num_episodes):
-        epsilon = max(0.01, 0.3-0.03*(n_epi/200))
+        epsilon = max(0.01, 0.3-0.03 *(n_epi/200))
         s = env.reset()
         s = torch.from_numpy(np.array(s)).float()
         done = False
