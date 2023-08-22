@@ -128,7 +128,7 @@ def main():
     optimizer = optim.Adam(q.parameters(), lr=learning_rate)
 
     for n_epi in range(num_episodes):
-        epsilon = max(0.01, 0.3-0.03 *(n_epi/200))
+        epsilon = max(0.01, 0.4-0.05 *(n_epi/200))
         s = env.reset()
         s = torch.from_numpy(np.array(s)).float()
         done = False
@@ -147,7 +147,7 @@ def main():
 
         if n_epi % print_interval == 0 and n_epi != 0:
             q_target.load_state_dict(q.state_dict())
-            print("n_episode : {}, final_score : {}, eps : {:.1f}%".format(n_epi, final_score, epsilon*100))
+            # print("n_episode : {}, final_score : {}, eps : {:.1f}%".format(n_epi, final_score, epsilon*100))
             
     s = env.reset()
     s = torch.from_numpy(np.array(s)).float()
@@ -164,8 +164,20 @@ def main():
         act_set.append(a)
         if done:
             break
-    return act_set, final_score2
+    # return act_set, final_score2
+    return final_score2
 
 if __name__ == '__main__':
-    act_set, final_score2 = main()    
-    print('Action : {}, Score : {}'.format(act_set, final_score2))
+    score_set = []
+    ten = 0
+    twenty_four = 0
+    for i in range(2):
+        final_score2 = main()
+        score_set.append(final_score2)
+        if final_score2 == 10:
+            ten += 1
+        elif final_score2 == 24:
+            twenty_four += 1
+    print(score_set)
+    print('10 : {}, 24 : {}'.format(ten, twenty_four))
+    #print('Action : {}, Score : {}'.format(act_set, final_score2))
