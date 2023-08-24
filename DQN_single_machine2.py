@@ -1,4 +1,5 @@
 import collections
+from collections import Counter
 import random
 import torch
 import torch.nn as nn
@@ -199,7 +200,7 @@ def main():
 
         if n_epi%print_interval==0 and n_epi!=0:
             q_target.load_state_dict(q.state_dict())
-            # print("n_episode : {}, final_score : {}, n_buffer : {}, eps : {:.1f}%".format(n_epi, final_score, memory.size(), epsilon*100))
+            print("n_episode : {}, final_score : {}, n_buffer : {}, eps : {:.1f}%".format(n_epi, final_score, memory.size(), epsilon*100))
             # print("n_episode : {}, final_score : {}".format(n_epi, final_score1))
         
     s = env.reset()
@@ -216,22 +217,28 @@ def main():
         act_set.append(a)
         if done:
             break
-    # return act_set, final_score2
-    return final_score2
+    return act_set, final_score2
+    #return final_score2
 
 if __name__ == '__main__':
-    # act_set, final_score2 = main()    
-    # print('Action : {}, Score : {}'.format(act_set, final_score2))
-    score_set = []
-    ten = 0
-    twenty_four = 0
-    for i in range(2):
-        final_score2 = main()
-        score_set.append(final_score2)
-        if final_score2 == 10:
-            ten += 1
-        elif final_score2 == 24:
-            twenty_four += 1
-    print(score_set)
-    print('10 : {}, 24 : {}'.format(ten, twenty_four))
-    #print('Action : {}, Score : {}'.format(act_set, final_score2))
+    act_set, final_score2 = main()
+    print('Action : {}, Score : {}'.format(act_set, final_score2))
+    # score_set = []
+    # ten = 0
+    # twenty_four = 0
+    # for i in range(100):
+    #     final_score2 = main()
+    #     score_set.append(final_score2)
+    #     if final_score2 == 10:
+    #         ten += 1
+    #     elif final_score2 == 24:
+    #         twenty_four += 1
+    #     print('{} 회 완료'.format(i+1))
+    # print(score_set)
+    # print('10 : {}, 24 : {}'.format(ten, twenty_four))
+
+    # number_count = Counter(score_set)
+    # # 결과 출력
+    # for number, count in number_count.items():
+    #     print(f"{number}: {count}개")
+    
