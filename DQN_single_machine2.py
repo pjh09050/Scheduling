@@ -24,7 +24,7 @@ learning_rate = 0.001
 gamma = 0.99
 buffer_limit = 20000
 batch_size = 32
-num_episodes = 2500
+num_episodes = 3000
 
 class ReplayBuffer():
     def __init__(self):
@@ -167,7 +167,11 @@ def main():
     optimizer = optim.Adam(q.parameters(), lr=learning_rate)
 
     for n_epi in range(num_episodes):
-        epsilon = max(0.01, 0.4-0.05*(n_epi/200))
+        if n_epi > 2000:
+            epsilon = max(0.01, 1-0.16*(n_epi/500))
+        else:
+            epsilon = 1
+        # epsilon = max(0.01, 0.4-0.05*(n_epi/200))
         s = env.reset()
         s = np.array(s)
         done = False

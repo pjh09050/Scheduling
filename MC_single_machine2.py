@@ -11,7 +11,7 @@ warnings.filterwarnings('ignore')
 
 learning_rate = 0.001
 gamma = 0.99
-num_episodes = 2500
+num_episodes = 3000
 
 class Score_Single_machine():
     def __init__(self):
@@ -109,7 +109,7 @@ class MC_Qnet(nn.Module):
 def train(q, optimizer, history, gamma):
     for t in range(len(history)):
         s, a, r, s_prime, done = history[t]
-        G = r  
+        G = r
         for k in range(t+1, len(history)):
             G += gamma * history[k][2] # gamma * reward
         q_value = q(s)[a]
@@ -128,7 +128,11 @@ def main():
     optimizer = optim.Adam(q.parameters(), lr=learning_rate)
 
     for n_epi in range(num_episodes):
-        epsilon = max(0.01, 0.4-0.05 *(n_epi/200))
+        if n_epi > 2000:
+            epsilon = max(0.01, 1-0.16*(n_epi/500))
+        else:
+            epsilon = 1
+        # epsilon = max(0.01, 0.4-0.05*(n_epi/200))
         s = env.reset()
         s = torch.from_numpy(np.array(s)).float()
         done = False
@@ -147,7 +151,7 @@ def main():
 
         if n_epi % print_interval == 0 and n_epi != 0:
             q_target.load_state_dict(q.state_dict())
-            print("n_episode : {}, final_score : {}, eps : {:.1f}%".format(n_epi, final_score, epsilon*100))
+            # print("n_episode : {}, final_score : {}, eps : {:.1f}%".format(n_epi, final_score, epsilon*100))
             
     s = env.reset()
     s = torch.from_numpy(np.array(s)).float()
@@ -164,28 +168,27 @@ def main():
         act_set.append(a)
         if done:
             break
-    return act_set, final_score2
-    #return final_score2
+    # return act_set, final_score2
+    return final_score2
 
 if __name__ == '__main__':
-    act_set, final_score2 = main()
-    print('Action : {}, Score : {}'.format(act_set, final_score2))
-    # score_set = []
-    # ten = 0
-    # twenty_four = 0
-    # for i in range(300):
-    #     final_score2 = main()
-    #     score_set.append(final_score2)
-    #     if final_score2 == 10:
-    #         ten += 1
-    #     elif final_score2 == 24:
-    #         twenty_four += 1
-    #     print('{} 회 완료'.format(i+1))
-    # print(score_set)
-    # print('10 : {}, 24 : {}'.format(ten, twenty_four))
+    # act_set, final_score2 = main()
+    # print('Action : {}, Score : {}'.format(act_set, final_score2))
+    score_set = []
+    ten = 0
+    twenty_four = 0
+    for i in range(300):
+        final_score2 = main()
+        score_set.append(final_score2)
+        if final_score2 == 10:
+            ten += 1
+        elif final_score2 == 24:
+            twenty_four += 1
+        print('{} 회 완료'.format(i+1))
+    print(score_set)
+    print('10 : {}, 24 : {}'.format(ten, twenty_four))
 
-    # number_count = Counter(score_set)
-    # # 결과 출력
-    # for number, count in number_count.items():
-    #     print(f"{number}: {count}개")
-    
+    number_count = Counter(score_set)
+    # 결과 출력
+    for number, count in number_count.items():
+        print(f"{number}: {count}개")
