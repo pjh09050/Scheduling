@@ -11,7 +11,7 @@ warnings.filterwarnings('ignore')
 
 learning_rate = 0.001
 gamma = 0.99
-num_episodes = 3000
+num_episodes = 5000
 
 class Score_Single_machine():
     def __init__(self):
@@ -129,7 +129,7 @@ def main():
 
     for n_epi in range(num_episodes):
         if n_epi > 2000:
-            epsilon = max(0.01, 1-0.16*(n_epi/500))
+            epsilon = max(0.01, 1-0.12*(n_epi/500))
         else:
             epsilon = 1
         # epsilon = max(0.01, 0.4-0.05*(n_epi/200))
