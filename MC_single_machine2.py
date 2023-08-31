@@ -8,10 +8,11 @@ import torch.optim as optim
 import numpy as np
 import warnings
 warnings.filterwarnings('ignore')
+from tqdm import tqdm
 
 learning_rate = 0.001
 gamma = 0.99
-num_episodes = 5000
+num_episodes = 7000
 
 class Score_Single_machine():
     def __init__(self):
@@ -128,8 +129,8 @@ def main():
     optimizer = optim.Adam(q.parameters(), lr=learning_rate)
 
     for n_epi in range(num_episodes):
-        if n_epi > 2000:
-            epsilon = max(0.01, 1-0.12*(n_epi/500))
+        if n_epi > 3000:
+            epsilon = max(0.01, 1-0.1*(n_epi/550))
         else:
             epsilon = 1
         # epsilon = max(0.01, 0.4-0.05*(n_epi/200))
@@ -177,7 +178,7 @@ if __name__ == '__main__':
     score_set = []
     ten = 0
     twenty_four = 0
-    for i in range(300):
+    for i in tqdm(range(300)):
         final_score2 = main()
         score_set.append(final_score2)
         if final_score2 == 10:
