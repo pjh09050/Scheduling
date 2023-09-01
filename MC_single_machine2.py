@@ -185,7 +185,7 @@ if __name__ == '__main__':
             ten += 1
         elif final_score2 == 24:
             twenty_four += 1
-        print('{} 회 완료'.format(i+1))
+        # print('{} 회 완료'.format(i+1))
     print(score_set)
     print('10 : {}, 24 : {}'.format(ten, twenty_four))
 
