@@ -126,7 +126,7 @@ def train(q, q_target, memory, optimizer):
         optimizer.step() # Qnet의 파라미터의 업데이트가 일어남
 
 def main():
-    df = pd.read_csv('100_job_uniform data.csv', index_col=0)
+    df = pd.read_csv('./Scheduling/100_job_uniform data.csv', index_col=0)
     env = Single_machine(df)
     q = Qnet()
     q_target = Qnet()
@@ -150,6 +150,7 @@ def main():
             s = np.array(s)
             s_prime = np.array(s_prime)
             done_mask = 0.0 if done else 1.0
+            print(done_mask)
             memory.put((s, a, r, s_prime, done_mask))
             s = s_prime
             score += r
